@@ -3,73 +3,32 @@ name: Backend CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'nacl_backend/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'nacl_backend/**'
 
 jobs:
-  lint:
-    name: Lint Backend
+  golangci:
+    name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '1.26'
           cache-dependency-path: nacl_backend/go.sum
-      
-      - name: Install dependencies
-        run: |
-          cd nacl_backend
-          go mod download
-      
-      - name: Run go fmt
-        run: |
-          cd nacl_backend
-          gofmt -d .
-          # Fail if any files need formatting
-          test -z "$(gofmt -l .)"
-      
-      - name: Run go vet
-        run: |
-          cd nacl_backend
-          go vet ./...
-      
-      - name: Install staticcheck
-        run: go install honnef.co/go/tools/cmd/staticcheck@latest
-      
-      - name: Run staticcheck
-        run: |
-          cd nacl_backend
-          staticcheck ./...
-
-  type-check:
-    name: Type Check Backend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v8
         with:
-          go-version: '1.26'
-          cache-dependency-path: nacl_backend/go.sum
-      
-      - name: Install dependencies
-        run: |
-          cd nacl_backend
-          go mod download
-      
-      - name: Build
-        run: |
-          cd nacl_backend
-          go build -v ./...
+          version: v2.6
+          working-directory: nacl_backend
 
   test:
-    name: Test Backend
     runs-on: ubuntu-latest
-    needs: [lint, type-check]
+    needs: [golangci]
     services:
       postgres:
         image: postgres:18
@@ -95,13 +54,18 @@ jobs:
       JWT_SECRET: test-secret-key-ci
     
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: '1.26'
           cache-dependency-path: nacl_backend/go.sum
+      
+      - name: Download dependencies
+        run: |
+          cd nacl_backend
+          go mod download
       
       - name: Install goose
         run: go install github.com/pressly/goose/v3/cmd/goose@latest
@@ -109,10 +73,19 @@ jobs:
       - name: Install sqlc
         run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
       
-      - name: Install dependencies
+      - name: Apply go fixes
         run: |
           cd nacl_backend
-          go mod download
+          go fix ./...
+      
+      - name: Check formatting
+        run: |
+          cd nacl_backend
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Unformatted files found:"
+            gofmt -l .
+            exit 1
+          fi
       
       - name: Run migrations
         run: |
@@ -124,10 +97,15 @@ jobs:
           cd nacl_backend
           sqlc generate
       
+      - name: Build
+        run: |
+          cd nacl_backend
+          go build -o bin/nacl_backend .
+      
       - name: Run tests
         run: |
           cd nacl_backend
-          go test -v -race -coverprofile=coverage.out ./...
+          go test -v -race ./...
       
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -135,33 +113,3 @@ jobs:
           files: nacl_backend/coverage.out
           flags: backend
           fail_ci_if_error: false
-
-  build:
-    name: Build Backend
-    runs-on: ubuntu-latest
-    needs: [test]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.26'
-          cache-dependency-path: nacl_backend/go.sum
-      
-      - name: Install dependencies
-        run: |
-          cd nacl_backend
-          go mod download
-      
-      - name: Build binary
-        run: |
-          cd nacl_backend
-          go build -v -o bin/nacl_backend .
-      
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: nacl_backend
-          path: nacl_backend/bin/nacl_backend
-          retention-days: 7

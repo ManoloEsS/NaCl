@@ -3,15 +3,19 @@ name: Frontend CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'nacl_frontend/**'
   pull_request:
     branches: [main]
+    paths:
+      - 'nacl_frontend/**'
 
 jobs:
   lint:
-    name: Lint Frontend
+    name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -31,10 +35,10 @@ jobs:
           npm run lint
 
   type-check:
-    name: Type Check Frontend
+    name: type-check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -53,12 +57,36 @@ jobs:
           cd nacl_frontend
           npx tsc --noEmit
 
-  build:
-    name: Build Frontend
+  test:
+    name: test
     runs-on: ubuntu-latest
     needs: [lint, type-check]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: nacl_frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: |
+          cd nacl_frontend
+          npm ci
+      
+      - name: Run tests
+        run: |
+          cd nacl_frontend
+          npm test -- --run
+  
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    needs: [lint, type-check, test]
+    steps:
+      - uses: actions/checkout@v5
       
       - name: Set up Node.js
         uses: actions/setup-node@v5

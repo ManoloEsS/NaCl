@@ -34,6 +34,11 @@ nacl_backend/bin/
 nacl_backend/tmp/
 nacl_backend/*.log
 
+# nacl_frontend specific
+nacl_frontend/node_modules/
+nacl_frontend/dist/
+nacl_frontend/coverage/
+
 # Editor/IDE
 # .idea/
 # .vscode/
