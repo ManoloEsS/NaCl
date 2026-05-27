@@ -92,7 +92,7 @@ func initializeLogger(logFile string) (*slog.Logger, closeLogger, error) {
 
 	file, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open log file: %v\n", err)
+		return nil, nil, fmt.Errorf("failed to open log file: %v", err)
 	}
 
 	bufferedWriter := bufio.NewWriterSize(file, 8192)
