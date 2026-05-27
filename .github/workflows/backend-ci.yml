@@ -106,10 +106,3 @@ jobs:
         run: |
           cd nacl_backend
           go test -v -race ./...
-      
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v4
-        with:
-          files: nacl_backend/coverage.out
-          flags: backend
-          fail_ci_if_error: false
