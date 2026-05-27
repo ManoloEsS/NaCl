@@ -101,7 +101,7 @@ func initializeLogger(logFile string) (*slog.Logger, closeLogger, error) {
 		if err != nil {
 			return err
 		}
-		file.Close()
+		_ = file.Close()
 		return nil
 	}
 
