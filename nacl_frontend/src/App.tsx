@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import "./App.css";
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import './App.css'
 
 interface Item {
   id: string;
@@ -9,55 +9,53 @@ interface Item {
 }
 
 function App() {
-  const [items, setItems] = useState<Item[]>([]);
-  const [newName, setNewName] = useState("");
-  const [newDesc, setNewDesc] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<Item[]>([])
+  const [newName, setNewName] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+  // const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchItems();
-  }, []);
+  useEffect(() => {}, [])
 
-  const fetchItems = async () => {
-    try {
-      const res = await axios.get<Item[]>("/api/items");
-      setItems(res.data);
-    } catch (err) {
-      console.error("Failed to fetch items:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchItems = async () => {
+  //   try {
+  //     const res = await axios.get<Item[]>('/api/items')
+  //     setItems(res.data)
+  //   } catch (err) {
+  //     console.error('Failed to fetch items:', err)
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
 
-  const handleAddItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName.trim()) return;
+  const handleAddItem = async (e: any) => {
+    e.preventDefault()
+    if (!newName.trim()) return
 
     try {
-      const res = await axios.post<Item>("/api/items", {
+      const res = await axios.post<Item>('/api/items', {
         name: newName,
         description: newDesc,
-      });
-      setItems([...items, res.data]);
-      setNewName("");
-      setNewDesc("");
+      })
+      setItems([...items, res.data])
+      setNewName('')
+      setNewDesc('')
     } catch (err) {
-      console.error("Failed to add item:", err);
+      console.error('Failed to add item:', err)
     }
-  };
+  }
 
   const handleDelete = async (id: string) => {
     try {
-      await axios.delete(`/api/items/${id}`);
-      setItems(items.filter((i) => i.id !== id));
+      await axios.delete(`/api/items/${id}`)
+      setItems(items.filter((i) => i.id !== id))
     } catch (err) {
-      console.error("Failed to delete item:", err);
+      console.error('Failed to delete item:', err)
     }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
   }
+
+  // if (loading) {
+  //   return <div>Loading...</div>;
+  // }
 
   return (
     <div className="container">
@@ -93,8 +91,7 @@ function App() {
 
       {items.length === 0 && <p>No items yet. Add one above!</p>}
     </div>
-  );
+  )
 }
 
-export default App;
-
+export default App
