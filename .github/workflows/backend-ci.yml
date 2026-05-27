@@ -1,0 +1,167 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: nacl_backend/go.sum
+      
+      - name: Install dependencies
+        run: |
+          cd nacl_backend
+          go mod download
+      
+      - name: Run go fmt
+        run: |
+          cd nacl_backend
+          gofmt -d .
+          # Fail if any files need formatting
+          test -z "$(gofmt -l .)"
+      
+      - name: Run go vet
+        run: |
+          cd nacl_backend
+          go vet ./...
+      
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+      
+      - name: Run staticcheck
+        run: |
+          cd nacl_backend
+          staticcheck ./...
+
+  type-check:
+    name: Type Check Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: nacl_backend/go.sum
+      
+      - name: Install dependencies
+        run: |
+          cd nacl_backend
+          go mod download
+      
+      - name: Build
+        run: |
+          cd nacl_backend
+          go build -v ./...
+
+  test:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    needs: [lint, type-check]
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nacl_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        volumes:
+          - postgres_data:/var/lib/postgresql
+    
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nacl_test?sslmode=disable
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/nacl_test?sslmode=disable
+      SALT_LOG_FILE: salt.test.log
+      SALT_PORT: 3334
+      DB_SSL: false
+      JWT_SECRET: test-secret-key-ci
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: nacl_backend/go.sum
+      
+      - name: Install goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+      
+      - name: Install sqlc
+        run: go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+      
+      - name: Install dependencies
+        run: |
+          cd nacl_backend
+          go mod download
+      
+      - name: Run migrations
+        run: |
+          cd nacl_backend
+          goose -dir sql/migrations postgres "$DATABASE_URL" up
+      
+      - name: Generate sqlc code
+        run: |
+          cd nacl_backend
+          sqlc generate
+      
+      - name: Run tests
+        run: |
+          cd nacl_backend
+          go test -v -race -coverprofile=coverage.out ./...
+      
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          files: nacl_backend/coverage.out
+          flags: backend
+          fail_ci_if_error: false
+
+  build:
+    name: Build Backend
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+          cache-dependency-path: nacl_backend/go.sum
+      
+      - name: Install dependencies
+        run: |
+          cd nacl_backend
+          go mod download
+      
+      - name: Build binary
+        run: |
+          cd nacl_backend
+          go build -v -o bin/nacl_backend .
+      
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nacl_backend
+          path: nacl_backend/bin/nacl_backend
+          retention-days: 7
