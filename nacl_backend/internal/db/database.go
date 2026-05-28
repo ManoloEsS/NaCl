@@ -1,9 +1,8 @@
-package database
+package db
 
 import (
 	"context"
 
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -28,8 +27,8 @@ func (d *Database) Close() {
 	d.Pool.Close()
 }
 
-func (d *Database) Queries() *db.Queries {
-	return db.New(d.Pool)
+func (d *Database) Queries() *Queries {
+	return New(d.Pool)
 }
 
 //TODO: add transaction helper for atomic transactions

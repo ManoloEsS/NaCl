@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/config"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/database"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/logger"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/server"
 )
@@ -40,7 +40,7 @@ func run(ctx context.Context) int {
 	log.Debug("logger succesfully initialized")
 
 	log.Debug("initializing db conn")
-	db, err := database.NewDatabase(ctx, cfg.DbString)
+	db, err := db.NewDatabase(ctx, cfg.DbString)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to connect to db: %v\n", err)
 		return 1

@@ -9,19 +9,20 @@ import (
 	"net/http"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/config"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/database"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
 type Server struct {
 	Config     *config.Config
 	HttpServer *http.Server
-	Db         *database.Database
+	Db         *db.Database
 	Logger     *slog.Logger
 }
 
 func NewServer(
-	db *database.Database,
+	db *db.Database,
 	logger *slog.Logger,
 	config *config.Config,
 ) *Server {
@@ -38,6 +39,17 @@ func NewServer(
 		Db:         db,
 		Logger:     logger,
 	}
+
+	r.Use(
+		middleware.RequestLogger(s.Logger),
+		middleware.Recovery(s.Logger),
+	)
+
+	r.Get("/", s.handlerIndex)
+
+	// r.Post("/login", s.handlerLogin)
+
+	r.Post("/api/users", s.handlerCreateUser)
 
 	return s
 }
@@ -63,32 +75,3 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.HttpServer.Shutdown(ctx)
 }
-
-// func main() {
-// 	r := chi.NewRouter()
-//
-// 	// set middleware
-// 	// r.Use(middleware.SomeMiddleware)
-//
-// 	//index routes
-// 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-// 		w.Write([]byte("root."))
-// 	})
-//
-// 	//create subroutes
-// 	//r.Route("/users", func(r chi.Router) {
-// 	//r.With(somemiddleware).Get("/", ListUsers)
-// 	//})
-//
-// 	//generate docs
-// 	// if *routes {
-// 	// 	// fmt.Println(docgen.JSONRoutesDoc(r))
-// 	// 	fmt.Println(docgen.MarkdownRoutesDoc(r, docgen.MarkdownOpts{
-// 	// 		ProjectPath: "github.com/go-chi/chi/v5",
-// 	// 		Intro:       "Welcome to the chi/_examples/rest generated docs.",
-// 	// 	}))
-// 	// 	return
-// 	// }
-//
-// 	http.ListenAndServe(":3333", r)
-// }

@@ -7,17 +7,48 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const getUser = `-- name: GetUser :one
-SELECT id FROM users WHERE id = $1
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (username, password_hash)
+VALUES (
+    $1,
+    $2
+    )
+    RETURNING id, username, password_hash, created_at, updated_at
 `
 
-func (q *Queries) GetUser(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, getUser, id)
-	var id_2 pgtype.UUID
-	err := row.Scan(&id_2)
-	return id_2, err
+type CreateUserParams struct {
+	Username     string `json:"username"`
+	PasswordHash string `json:"password_hash"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.PasswordHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, username, password_hash, created_at, updated_at FROM users WHERE username = $1
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

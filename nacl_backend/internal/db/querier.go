@@ -6,12 +6,11 @@ package db
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
-	GetUser(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	GetUserByUsername(ctx context.Context, username string) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -78,7 +78,7 @@ db-test-clean:
 		-v nacl_test_data:/var/lib/postgresql \
 		-p 5433:5432 \
 		postgres:18
-	sleep 5
+	sleep 3
 	docker exec nacl_postgres_test psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'nacl_test'" | grep -q 1 || \
 		docker exec nacl_postgres_test psql -U postgres -c "CREATE DATABASE nacl_test;"
 	goose postgres "$(DATABASE_URL_TEST)" -dir sql/migrations up
@@ -93,7 +93,8 @@ run: build
 
 # Test: run tests with test database
 test: db-test-clean
-	DATABASE_URL="$(DATABASE_URL_TEST)" go test ./... -v
+	sleep 1
+	go test ./... -v
 
 # Clean: remove build artifacts
 clean:
