@@ -86,7 +86,7 @@ jobs:
       - name: Run migrations
         run: |
           cd nacl_backend
-          goose -dir sql/migrations postgres "$DATABASE_URL" up
+          goose -dir sql/migrations postgres "$DATABASE_URL_TEST" up
       
       - name: Generate sqlc code
         run: |
