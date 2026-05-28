@@ -1,31 +1,31 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import "./App.css";
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import './App.css'
 
 function App() {
-  const [newUsername, setNewUsername] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [newUsername, setNewUsername] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   // const [loading, setLoading] = useState(true)
 
-  useEffect(() => {}, []);
+  useEffect(() => {}, [])
 
   const handleRegisterUser = async (e: any) => {
-    e.preventDefault();
+    e.preventDefault()
     if (!newUsername.trim()) {
-      return;
+      return
     }
 
     try {
-      await axios.post("/api/users", {
+      await axios.post('/api/users', {
         username: newUsername,
         password: newPassword,
-      });
-      setNewUsername("");
-      setNewPassword("");
+      })
+      setNewUsername('')
+      setNewPassword('')
     } catch (err) {
-      console.error("Failed to add item:", err);
+      console.error('Failed to add item:', err)
     }
-  };
+  }
 
   return (
     <div className="container">
@@ -44,14 +44,14 @@ function App() {
           value={newPassword}
           onChange={(e) =>
             setNewPassword(() => {
-              return "*".repeat(e.target.value.length);
+              return '*'.repeat(e.target.value.length)
             })
           }
         />
         <button type="submit">Register</button>
       </form>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

@@ -18,7 +18,7 @@ func (s *Server) RespondWithJSON(w http.ResponseWriter, code int, payload any) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
-	w.Write(response)
+	_, _ = w.Write(response)
 }
 
 // RespondWithError responds with a JSON error message and logs the error if provided.
@@ -44,11 +44,11 @@ func (s *Server) hashPassword(password string) (string, error) {
 
 // CheckPasswordHash compares a plaintext password with an Argon2id hash.
 // Used by HandlerUserLogin to verify user credentials during authentication.
-func (s *Server) checkPasswordHash(password, hash string) (bool, error) {
-	match, err := argon2id.ComparePasswordAndHash(password, hash)
-	if err != nil {
-		return match, err
-	}
-
-	return match, nil
-}
+// func (s *Server) checkPasswordHash(password, hash string) (bool, error) {
+// 	match, err := argon2id.ComparePasswordAndHash(password, hash)
+// 	if err != nil {
+// 		return match, err
+// 	}
+//
+// 	return match, nil
+// }
