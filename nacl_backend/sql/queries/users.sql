@@ -12,6 +12,10 @@ VALUES (
     )
     RETURNING *;
 
+-- name: DeleteUser :one
+DELETE FROM users
+WHERE id = $1;
+
 -- name: UpdateUserPasswordHash :one
 UPDATE users
 SET password_hash = $1, updated_at = NOW()
