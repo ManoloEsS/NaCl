@@ -10,6 +10,7 @@ import (
 
 type Operation struct {
 	ID          pgtype.UUID      `json:"id"`
+	UserID      pgtype.UUID      `json:"user_id"`
 	Type        string           `json:"type"`
 	ServiceID   pgtype.UUID      `json:"service_id"`
 	Description pgtype.Text      `json:"description"`
