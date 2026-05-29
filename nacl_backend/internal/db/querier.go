@@ -11,9 +11,15 @@ import (
 )
 
 type Querier interface {
+	CreateService(ctx context.Context, arg CreateServiceParams) (Service, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteServiceById(ctx context.Context, arg DeleteServiceByIdParams) error
+	DeleteUser(ctx context.Context, id pgtype.UUID) error
+	GetAllServicesForUserId(ctx context.Context, userID pgtype.UUID) ([]Service, error)
+	GetServiceById(ctx context.Context, id pgtype.UUID) (Service, error)
 	GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	UpdateService(ctx context.Context, arg UpdateServiceParams) error
 	UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error
 	UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error)
 	UpdateUserSalt(ctx context.Context, arg UpdateUserSaltParams) error

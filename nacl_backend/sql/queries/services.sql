@@ -19,7 +19,7 @@ WHERE id = $1;
 -- name: GetAllServicesForUserId :many
 SELECT * 
 FROM services
-WHERE user_id = $1
+WHERE user_id = $1;
 
 -- name: UpdateService :exec
 UPDATE services
@@ -33,4 +33,4 @@ WHERE id = $6 AND user_id = $7;
 
 -- name: DeleteServiceById :exec
 DELETE FROM services
-WHERE id = $1;
+WHERE id = $1 AND user_id = $2;
