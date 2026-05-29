@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -15,7 +17,7 @@ VALUES (
     $1,
     $2
     )
-    RETURNING id, username, password_hash, created_at, updated_at
+    RETURNING id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -30,6 +32,27 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.ID,
 		&i.Username,
 		&i.PasswordHash,
+		&i.MasterKeySalt,
+		&i.EncryptedMasterKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at FROM users WHERE id = $1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserById, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.MasterKeySalt,
+		&i.EncryptedMasterKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -37,7 +60,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, password_hash, created_at, updated_at FROM users WHERE username = $1
+SELECT id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at FROM users WHERE username = $1
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
@@ -47,8 +70,69 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 		&i.ID,
 		&i.Username,
 		&i.PasswordHash,
+		&i.MasterKeySalt,
+		&i.EncryptedMasterKey,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const updateUserKey = `-- name: UpdateUserKey :exec
+UPDATE users
+SET encrypted_master_key = $1
+WHERE id = $2
+`
+
+type UpdateUserKeyParams struct {
+	EncryptedMasterKey pgtype.Text `json:"encrypted_master_key"`
+	ID                 pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error {
+	_, err := q.db.Exec(ctx, updateUserKey, arg.EncryptedMasterKey, arg.ID)
+	return err
+}
+
+const updateUserPasswordHash = `-- name: UpdateUserPasswordHash :one
+UPDATE users
+SET password_hash = $1, updated_at = NOW()
+WHERE id = $2
+RETURNING id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at
+`
+
+type UpdateUserPasswordHashParams struct {
+	PasswordHash string      `json:"password_hash"`
+	ID           pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error) {
+	row := q.db.QueryRow(ctx, updateUserPasswordHash, arg.PasswordHash, arg.ID)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.MasterKeySalt,
+		&i.EncryptedMasterKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateUserSalt = `-- name: UpdateUserSalt :exec
+UPDATE users
+SET master_key_salt = $1
+WHERE id = $2
+`
+
+type UpdateUserSaltParams struct {
+	MasterKeySalt pgtype.Text `json:"master_key_salt"`
+	ID            pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateUserSalt(ctx context.Context, arg UpdateUserSaltParams) error {
+	_, err := q.db.Exec(ctx, updateUserSalt, arg.MasterKeySalt, arg.ID)
+	return err
 }
