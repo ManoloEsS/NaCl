@@ -11,14 +11,18 @@ import (
 )
 
 type Querier interface {
+	CreateOperation(ctx context.Context, arg CreateOperationParams) (Operation, error)
 	CreateService(ctx context.Context, arg CreateServiceParams) (Service, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteServiceById(ctx context.Context, arg DeleteServiceByIdParams) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	GetAllServicesForUserId(ctx context.Context, userID pgtype.UUID) ([]Service, error)
+	GetOperationsForService(ctx context.Context, arg GetOperationsForServiceParams) ([]Operation, error)
+	GetOperationsForUserId(ctx context.Context, userID pgtype.UUID) ([]Operation, error)
 	GetServiceById(ctx context.Context, id pgtype.UUID) (Service, error)
 	GetUserById(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
+	UpdateOperationDesc(ctx context.Context, arg UpdateOperationDescParams) error
 	UpdateService(ctx context.Context, arg UpdateServiceParams) error
 	UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error
 	UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error)

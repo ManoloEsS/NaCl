@@ -12,6 +12,7 @@ type Operation struct {
 	ID          pgtype.UUID      `json:"id"`
 	UserID      pgtype.UUID      `json:"user_id"`
 	Type        string           `json:"type"`
+	Service     string           `json:"service"`
 	ServiceID   pgtype.UUID      `json:"service_id"`
 	Description pgtype.Text      `json:"description"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
