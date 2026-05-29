@@ -8,10 +8,33 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type Operation struct {
+	ID          pgtype.UUID      `json:"id"`
+	Type        string           `json:"type"`
+	ServiceID   pgtype.UUID      `json:"service_id"`
+	Description pgtype.Text      `json:"description"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+}
+
+type Service struct {
+	ID                  pgtype.UUID      `json:"id"`
+	Service             string           `json:"service"`
+	ServiceUsername     string           `json:"service_username"`
+	Description         pgtype.Text      `json:"description"`
+	EncryptedPassword   string           `json:"encrypted_password"`
+	Nonce               string           `json:"nonce"`
+	EncryptionAlgorithm string           `json:"encryption_algorithm"`
+	UserID              pgtype.UUID      `json:"user_id"`
+	CreatedAt           pgtype.Timestamp `json:"created_at"`
+	UpdatedAt           pgtype.Timestamp `json:"updated_at"`
+}
+
 type User struct {
-	ID           pgtype.UUID      `json:"id"`
-	Username     string           `json:"username"`
-	PasswordHash string           `json:"password_hash"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
-	UpdatedAt    pgtype.Timestamp `json:"updated_at"`
+	ID                 pgtype.UUID      `json:"id"`
+	Username           string           `json:"username"`
+	PasswordHash       string           `json:"password_hash"`
+	MasterKeySalt      pgtype.Text      `json:"master_key_salt"`
+	EncryptedMasterKey pgtype.Text      `json:"encrypted_master_key"`
+	CreatedAt          pgtype.Timestamp `json:"created_at"`
+	UpdatedAt          pgtype.Timestamp `json:"updated_at"`
 }
