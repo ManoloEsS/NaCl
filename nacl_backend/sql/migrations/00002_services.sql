@@ -1,5 +1,4 @@
 -- +goose Up
-
 CREATE TABLE services (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     service TEXT NOT NULL,
@@ -16,5 +15,4 @@ CREATE TABLE services (
 );
 
 -- +goose Down
-
 DROP TABLE services;
