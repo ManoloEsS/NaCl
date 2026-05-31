@@ -15,17 +15,15 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	var userRequest CreateUserRequest
 	err := decoder.Decode(&userRequest)
 	if err != nil {
-		s.RespondWithError(w, http.StatusBadRequest, "'username' and 'password' required", err)
+		s.RespondWithError(w, http.StatusBadRequest, "'username' and 'password' required", pkgerr.WithStack(err))
 		return
 	}
 
-	// Validate username
 	if strings.TrimSpace(userRequest.Username) == "" {
 		s.RespondWithError(w, http.StatusBadRequest, "username is required", nil)
 		return
 	}
 
-	// Validate password
 	if userRequest.Password == "" {
 		s.RespondWithError(w, http.StatusBadRequest, "password is required", nil)
 		return
@@ -33,14 +31,23 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	hashedPassword, err := s.hashPassword(userRequest.Password)
 	if err != nil {
-		s.RespondWithError(w, http.StatusInternalServerError, "could not process password", pkgerr.WithStack(err))
+		s.RespondWithError(
+			w,
+			http.StatusInternalServerError,
+			"could not process password",
+			pkgerr.WithStack(err),
+		)
 		return
 	}
 
 	queries := s.Db.Queries()
-	created, err := queries.CreateUser(r.Context(), db.CreateUserParams{Username: userRequest.Username, PasswordHash: hashedPassword})
+	created, err := queries.CreateUser(
+		r.Context(), db.CreateUserParams{
+			Username:     userRequest.Username,
+			PasswordHash: hashedPassword,
+		})
 	if err != nil {
-		s.RespondWithError(w, 500, "could not create user", pkgerr.WithStack(err))
+		s.RespondWithError(w, 500, "could not create user", err)
 		return
 	}
 

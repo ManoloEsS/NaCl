@@ -23,6 +23,7 @@ func (s *Server) RespondWithJSON(w http.ResponseWriter, code int, payload any) {
 
 // RespondWithError responds with a JSON error message and logs the error if provided.
 func (s *Server) RespondWithError(w http.ResponseWriter, code int, msg string, err error) {
+	s.Logger.Error(msg, "error", err)
 	type errorResponse struct {
 		Error string `json:"error"`
 	}

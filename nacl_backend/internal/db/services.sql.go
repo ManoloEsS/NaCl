@@ -17,20 +17,18 @@ INSERT INTO services (
     service_username,
     description,
     encrypted_password,
-    nonce,
     encryption_algorithm,
     user_id
     )
-VALUES($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, service, service_username, description, encrypted_password, nonce, encryption_algorithm, user_id, created_at, updated_at
+VALUES($1, $2, $3, $4, $5, $6)
+RETURNING id, service, service_username, description, encrypted_password, encryption_algorithm, user_id, created_at, updated_at
 `
 
 type CreateServiceParams struct {
 	Service             string      `json:"service"`
-	ServiceUsername     string      `json:"service_username"`
+	ServiceUsername     []byte      `json:"service_username"`
 	Description         pgtype.Text `json:"description"`
-	EncryptedPassword   string      `json:"encrypted_password"`
-	Nonce               string      `json:"nonce"`
+	EncryptedPassword   []byte      `json:"encrypted_password"`
 	EncryptionAlgorithm string      `json:"encryption_algorithm"`
 	UserID              pgtype.UUID `json:"user_id"`
 }
@@ -41,7 +39,6 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (S
 		arg.ServiceUsername,
 		arg.Description,
 		arg.EncryptedPassword,
-		arg.Nonce,
 		arg.EncryptionAlgorithm,
 		arg.UserID,
 	)
@@ -52,7 +49,6 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (S
 		&i.ServiceUsername,
 		&i.Description,
 		&i.EncryptedPassword,
-		&i.Nonce,
 		&i.EncryptionAlgorithm,
 		&i.UserID,
 		&i.CreatedAt,
@@ -77,7 +73,7 @@ func (q *Queries) DeleteServiceById(ctx context.Context, arg DeleteServiceByIdPa
 }
 
 const getAllServicesForUserId = `-- name: GetAllServicesForUserId :many
-SELECT id, service, service_username, description, encrypted_password, nonce, encryption_algorithm, user_id, created_at, updated_at 
+SELECT id, service, service_username, description, encrypted_password, encryption_algorithm, user_id, created_at, updated_at 
 FROM services
 WHERE user_id = $1
 `
@@ -97,7 +93,6 @@ func (q *Queries) GetAllServicesForUserId(ctx context.Context, userID pgtype.UUI
 			&i.ServiceUsername,
 			&i.Description,
 			&i.EncryptedPassword,
-			&i.Nonce,
 			&i.EncryptionAlgorithm,
 			&i.UserID,
 			&i.CreatedAt,
@@ -114,7 +109,7 @@ func (q *Queries) GetAllServicesForUserId(ctx context.Context, userID pgtype.UUI
 }
 
 const getServiceById = `-- name: GetServiceById :one
-SELECT id, service, service_username, description, encrypted_password, nonce, encryption_algorithm, user_id, created_at, updated_at
+SELECT id, service, service_username, description, encrypted_password, encryption_algorithm, user_id, created_at, updated_at
 FROM services
 WHERE id = $1
 `
@@ -128,7 +123,6 @@ func (q *Queries) GetServiceById(ctx context.Context, id pgtype.UUID) (Service, 
 		&i.ServiceUsername,
 		&i.Description,
 		&i.EncryptedPassword,
-		&i.Nonce,
 		&i.EncryptionAlgorithm,
 		&i.UserID,
 		&i.CreatedAt,
@@ -142,17 +136,15 @@ UPDATE services
 SET service_username = $1,
     description = $2,
     encrypted_password = $3,
-    nonce = $4,
-    encryption_algorithm = $5,
+    encryption_algorithm = $4,
     updated_at = NOW()
-WHERE id = $6 AND user_id = $7
+WHERE id = $5 AND user_id = $6
 `
 
 type UpdateServiceParams struct {
-	ServiceUsername     string      `json:"service_username"`
+	ServiceUsername     []byte      `json:"service_username"`
 	Description         pgtype.Text `json:"description"`
-	EncryptedPassword   string      `json:"encrypted_password"`
-	Nonce               string      `json:"nonce"`
+	EncryptedPassword   []byte      `json:"encrypted_password"`
 	EncryptionAlgorithm string      `json:"encryption_algorithm"`
 	ID                  pgtype.UUID `json:"id"`
 	UserID              pgtype.UUID `json:"user_id"`
@@ -163,7 +155,6 @@ func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) er
 		arg.ServiceUsername,
 		arg.Description,
 		arg.EncryptedPassword,
-		arg.Nonce,
 		arg.EncryptionAlgorithm,
 		arg.ID,
 		arg.UserID,
