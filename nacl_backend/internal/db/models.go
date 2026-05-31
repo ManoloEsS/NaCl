@@ -21,10 +21,9 @@ type Operation struct {
 type Service struct {
 	ID                  pgtype.UUID      `json:"id"`
 	Service             string           `json:"service"`
-	ServiceUsername     string           `json:"service_username"`
+	ServiceUsername     []byte           `json:"service_username"`
 	Description         pgtype.Text      `json:"description"`
-	EncryptedPassword   string           `json:"encrypted_password"`
-	Nonce               string           `json:"nonce"`
+	EncryptedPassword   []byte           `json:"encrypted_password"`
 	EncryptionAlgorithm string           `json:"encryption_algorithm"`
 	UserID              pgtype.UUID      `json:"user_id"`
 	CreatedAt           pgtype.Timestamp `json:"created_at"`
