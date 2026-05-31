@@ -366,6 +366,47 @@ Step 8: Update user record
 | Salt stored plaintext | Attacker has salt | Salt is useless without password |
 | Master key in memory during operation | Brief exposure | Cleared immediately after use |
 | HTTPS required | TLS overhead | Use TLS 1.3, HTTP/2 |
+| Ciphertext length reveals plaintext length | Attacker can infer password length | Acceptable for password manager use case; length doesn't reveal content or significantly reduce keyspace |
+
+### 🔐 Ciphertext Length Decision
+
+**Decision:** Do not pad ciphertext to fixed length (MVP)
+
+**Rationale:**
+- Ciphertext length = plaintext length + 28 bytes (nonce + auth tag)
+- After base64 encoding: ~1.33x overhead
+- Example: 32-byte master key → 60 bytes encrypted → ~80 chars base64
+
+**Why This Is Acceptable:**
+1. **Password length already known** - Users know how many passwords they store and roughly how long they are
+2. **Length doesn't reveal content** - Knowing a password is 12 characters doesn't help crack it (could be weak or strong)
+3. **Minimal security benefit** - Compared to other threats (nonce reuse, weak keys, access control)
+4. **Significant trade-offs** - Padding wastes storage, adds complexity, false sense of security
+
+**When Length Leakage Matters:**
+- ✅ Encrypting documents (1 page vs 100 pages reveals sensitive info)
+- ✅ Encrypting messages ("yes" vs detailed response)
+- ✅ Encrypting search queries (short vs long reveals intent)
+- ❌ Passwords (not a significant concern for password managers)
+
+**Future Enhancement (Post-MVP):**
+If length hiding becomes important, implement **bucketed padding**:
+```go
+// Round up to nearest 32 bytes
+func padToBucket(data []byte) []byte {
+    bucket := 32
+    remainder := len(data) % bucket
+    if remainder == 0 {
+        return data
+    }
+    padding := bucket - remainder
+    return append(data, make([]byte, padding)...)
+}
+```
+
+This hides exact length while being more efficient than fixed-length padding.
+
+**Industry Standard:** Most password managers (1Password, Bitwarden, LastPass) do not pad ciphertext length.
 
 ### 🔐 Master Key Handling
 
