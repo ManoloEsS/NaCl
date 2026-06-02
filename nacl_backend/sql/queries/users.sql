@@ -5,12 +5,14 @@ SELECT * FROM users WHERE username = $1;
 SELECT * FROM users WHERE id = $1;
 
 -- name: CreateUser :one
-INSERT INTO users (username, password_hash)
+INSERT INTO users (username, password_hash, master_key_salt, encrypted_master_key)
 VALUES (
     $1,
-    $2
+    $2,
+    $3,
+    $4
     )
-    RETURNING *;
+    RETURNING username, password_hash;
 
 -- name: DeleteUser :exec
 DELETE FROM users

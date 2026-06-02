@@ -12,31 +12,37 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (username, password_hash)
+INSERT INTO users (username, password_hash, master_key_salt, encrypted_master_key)
 VALUES (
     $1,
-    $2
+    $2,
+    $3,
+    $4
     )
-    RETURNING id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at
+    RETURNING username, password_hash
 `
 
 type CreateUserParams struct {
+	Username           string `json:"username"`
+	PasswordHash       string `json:"password_hash"`
+	MasterKeySalt      string `json:"master_key_salt"`
+	EncryptedMasterKey string `json:"encrypted_master_key"`
+}
+
+type CreateUserRow struct {
 	Username     string `json:"username"`
 	PasswordHash string `json:"password_hash"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Username, arg.PasswordHash)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.PasswordHash,
-		&i.MasterKeySalt,
-		&i.EncryptedMasterKey,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Username,
+		arg.PasswordHash,
+		arg.MasterKeySalt,
+		arg.EncryptedMasterKey,
 	)
+	var i CreateUserRow
+	err := row.Scan(&i.Username, &i.PasswordHash)
 	return i, err
 }
 
@@ -95,7 +101,7 @@ WHERE id = $2
 `
 
 type UpdateUserKeyParams struct {
-	EncryptedMasterKey pgtype.Text `json:"encrypted_master_key"`
+	EncryptedMasterKey string      `json:"encrypted_master_key"`
 	ID                 pgtype.UUID `json:"id"`
 }
 
@@ -138,7 +144,7 @@ WHERE id = $2
 `
 
 type UpdateUserSaltParams struct {
-	MasterKeySalt pgtype.Text `json:"master_key_salt"`
+	MasterKeySalt string      `json:"master_key_salt"`
 	ID            pgtype.UUID `json:"id"`
 }
 

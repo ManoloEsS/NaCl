@@ -34,8 +34,8 @@ type User struct {
 	ID                 pgtype.UUID      `json:"id"`
 	Username           string           `json:"username"`
 	PasswordHash       string           `json:"password_hash"`
-	MasterKeySalt      pgtype.Text      `json:"master_key_salt"`
-	EncryptedMasterKey pgtype.Text      `json:"encrypted_master_key"`
+	MasterKeySalt      string           `json:"master_key_salt"`
+	EncryptedMasterKey string           `json:"encrypted_master_key"`
 	CreatedAt          pgtype.Timestamp `json:"created_at"`
 	UpdatedAt          pgtype.Timestamp `json:"updated_at"`
 }
