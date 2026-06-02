@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +36,6 @@ func TestPasswordHash(t *testing.T) {
 			s := newTestServer(t, d)
 
 			hashedPassword, err := s.hashPassword(tt.password)
-			log.Println(hashedPassword)
 			assert.NoError(t, err, "expected err to be nil, got %v", err)
 
 			if tt.expectedErr == true {
