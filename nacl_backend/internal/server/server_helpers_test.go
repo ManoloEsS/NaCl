@@ -46,7 +46,7 @@ func TestPasswordHash(t *testing.T) {
 				return
 			}
 
-			match, err := s.checkPasswordHash(tt.password, hashedPassword)
+			match, _ := s.checkPasswordHash(tt.password, hashedPassword)
 			assert.True(t, match, "expected match to be true")
 		})
 	}
