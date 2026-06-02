@@ -99,3 +99,7 @@ test: db-test-clean
 # Clean: remove build artifacts
 clean:
 	rm -rf bin/ tmp/
+
+# Lint: run ci linter
+lint:
+	golangci-lint run
