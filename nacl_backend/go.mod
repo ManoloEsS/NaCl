@@ -1,6 +1,6 @@
 module github.com/ManoloEsS/NaCl/nacl_backend
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/alexedwards/argon2id v1.0.0
@@ -9,6 +9,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/crypto v0.14.0
 )
 
 require (
@@ -19,7 +20,6 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
-	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.29.0 // indirect

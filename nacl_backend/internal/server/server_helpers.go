@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 
 	"github.com/alexedwards/argon2id"
@@ -45,11 +46,28 @@ func (s *Server) hashPassword(password string) (string, error) {
 
 // CheckPasswordHash compares a plaintext password with an Argon2id hash.
 // Used by HandlerUserLogin to verify user credentials during authentication.
-// func (s *Server) checkPasswordHash(password, hash string) (bool, error) {
-// 	match, err := argon2id.ComparePasswordAndHash(password, hash)
-// 	if err != nil {
-// 		return match, err
-// 	}
-//
-// 	return match, nil
-// }
+func (s *Server) checkPasswordHash(password, hash string) (bool, error) {
+	match, err := argon2id.ComparePasswordAndHash(password, hash)
+	if err != nil {
+		return match, err
+	}
+
+	return match, nil
+}
+
+// takes a Validator interaface and a reader and returns an instance of
+// the Validator and an error. Used in handlers to decode and validate request body
+// into a preset request struct
+func decodeAndValidate[T Validator](body io.Reader) (T, error) {
+	var req T
+
+	if err := json.NewDecoder(body).Decode(&req); err != nil {
+		return req, err
+	}
+
+	if err := req.Validate(); err != nil {
+		return req, err
+	}
+
+	return req, nil
+}

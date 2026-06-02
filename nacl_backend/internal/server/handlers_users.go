@@ -1,35 +1,20 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
-	"strings"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	pkgerr "github.com/pkg/errors"
 )
 
 func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-
-	var userRequest CreateUserRequest
-	err := decoder.Decode(&userRequest)
+	userData, err := decodeAndValidate[*CreateUserRequest](r.Body)
 	if err != nil {
-		s.RespondWithError(w, http.StatusBadRequest, "'username' and 'password' required", pkgerr.WithStack(err))
+		s.RespondWithError(w, http.StatusBadRequest, "'username' and 'password' required", err)
 		return
 	}
 
-	if strings.TrimSpace(userRequest.Username) == "" {
-		s.RespondWithError(w, http.StatusBadRequest, "username is required", nil)
-		return
-	}
-
-	if userRequest.Password == "" {
-		s.RespondWithError(w, http.StatusBadRequest, "password is required", nil)
-		return
-	}
-
-	hashedPassword, err := s.hashPassword(userRequest.Password)
+	hashedPassword, err := s.hashPassword(userData.Password)
 	if err != nil {
 		s.RespondWithError(
 			w,
@@ -43,7 +28,7 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	queries := s.Db.Queries()
 	created, err := queries.CreateUser(
 		r.Context(), db.CreateUserParams{
-			Username:     userRequest.Username,
+			Username:     userData.Username,
 			PasswordHash: hashedPassword,
 		})
 	if err != nil {
