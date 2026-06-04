@@ -2,17 +2,23 @@ package server
 
 import (
 	"encoding/base64"
+	"fmt"
 	"net/http"
 
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
-	pkgerr "github.com/pkg/errors"
 )
 
 func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
-	userData, err := decodeAndValidate[*CreateUserRequest](r.Body)
+	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
+	userData, err := decodeAndValidate[*UserRequest](r.Body)
 	if err != nil {
-		s.RespondWithError(w, http.StatusBadRequest, "'username' and 'password' required", err)
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not process payload: %w", err),
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(w, http.StatusBadRequest, "could not create user", err)
 		return
 	}
 
@@ -21,24 +27,34 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	derivedKey, err := encryption.DeriveKey(userData.Password, salt)
 	if err != nil {
-		s.RespondWithError(w, 500, "couldn't derive key", err)
-		s.Logger.Error("could not derive key", "error", err)
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not derive key: %w", err),
+			"user", userData.Username,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(w, http.StatusInternalServerError, "could not create user", err)
+		return
 	}
 
 	encryptedMasterKey, err := encryption.Encrypt(key, derivedKey)
 	if err != nil {
-		s.RespondWithError(w, 500, "could not encrypt master key", err)
-		s.Logger.Error("could not encrypt master key", "error", err)
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not encrypt master key: %w", err),
+			"user", userData.Username,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(w, http.StatusInternalServerError, "could not create user", err)
+		return
 	}
 
 	hashedPassword, err := s.hashPassword(userData.Password)
 	if err != nil {
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not process password",
-			pkgerr.WithStack(err),
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not hash password: %w", err),
+			"user", userData.Username,
+			"endpoint", endpointReqPath,
 		)
+		s.RespondWithError(w, http.StatusInternalServerError, "could not create user", err)
 		return
 	}
 
@@ -51,7 +67,12 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		s.RespondWithError(w, 500, "could not create user", err)
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not insert user record: %w", err),
+			"user", created.Username,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(w, http.StatusInternalServerError, "could not create user", err)
 		return
 	}
 
