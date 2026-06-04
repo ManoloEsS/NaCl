@@ -49,3 +49,5 @@ func TestPasswordHash(t *testing.T) {
 		})
 	}
 }
+
+// TODO: add unittest for decodeAndValidate function
