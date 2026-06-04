@@ -12,6 +12,7 @@ import (
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -94,11 +95,14 @@ func TestHandlerLogin(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.loginWantCode, rr.Code, "unexpected status code")
+			assert.IsType(t, uuid.UUID{}, userDataLogin.Id, "login response does not contain UUID id")
 
 			if !tt.expectError {
 				assert.Equal(t, user.Username, userDataLogin.Username)
+				assert.NotEqual(t, uuid.Nil, userDataLogin.Id, "expected id to be not nil")
 				return
 			}
+
 		})
 	}
 }
