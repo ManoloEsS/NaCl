@@ -45,7 +45,7 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 	claim := jwt.RegisteredClaims{}
 	token, err := jwt.ParseWithClaims(tokenString, &claim, func(token *jwt.Token) (any, error) {
 		if token.Method != jwt.SigningMethodHS256 {
-			return nil, errors.New("Unexpected signing method")
+			return nil, errors.New("unexpected signing method")
 		}
 		return []byte(tokenSecret), nil
 	})
@@ -55,7 +55,7 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 
 	_, ok := token.Claims.(*jwt.RegisteredClaims)
 	if !ok {
-		return uuid.Nil, errors.New("Couldn't assert claims to RegisteredClaims")
+		return uuid.Nil, errors.New("couldn't assert claims to RegisteredClaims")
 	}
 
 	userIDString, err := token.Claims.GetSubject()
@@ -68,12 +68,12 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return uuid.Nil, err
 	}
 	if issuer != string(TokenTypeAccess) {
-		return uuid.Nil, errors.New("Invalid issuer")
+		return uuid.Nil, errors.New("invalid issuer")
 	}
 
 	ID, err := uuid.Parse(userIDString)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("Invalid user ID: %w", err)
+		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 
 	return ID, nil

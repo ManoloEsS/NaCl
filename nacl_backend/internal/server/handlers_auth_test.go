@@ -96,7 +96,7 @@ func TestHandlerLogin(t *testing.T) {
 			assert.Equal(t, tt.loginWantCode, rr.Code, "unexpected status code")
 
 			if !tt.expectError {
-				assert.Equal(t, user.Username, userDataLogin.UserResponse.Username)
+				assert.Equal(t, user.Username, userDataLogin.Username)
 				return
 			}
 		})
