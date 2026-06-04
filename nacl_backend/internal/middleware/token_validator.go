@@ -66,7 +66,7 @@ func sendErrorResponse(err error, w http.ResponseWriter, logger *slog.Logger) {
 	response, err := json.Marshal(errorResponse{Error: err.Error()})
 	if err != nil {
 		logger.Error("Error marshalling JSON", "error", err)
-		w.WriteHeader(500)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
