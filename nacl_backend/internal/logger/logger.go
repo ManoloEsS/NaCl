@@ -2,21 +2,19 @@ package logger
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
-	pkgerr "github.com/pkg/errors"
 )
 
 type closeLogger func() error
 
-type stackTracer interface {
-	error
-	StackTrace() pkgerr.StackTrace
-}
+// type stackTracer interface {
+// 	error
+// 	StackTrace() pkgerr.StackTrace
+// }
 
 func InitializeLogger(logFile string) (*slog.Logger, closeLogger, error) {
 	debugHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
@@ -26,7 +24,7 @@ func InitializeLogger(logFile string) (*slog.Logger, closeLogger, error) {
 
 	file, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open log file: %v", err)
+		return nil, nil, fmt.Errorf("failed to open log file: %w", err)
 	}
 
 	bufferedWriter := bufio.NewWriterSize(file, 8192)
@@ -64,9 +62,9 @@ func replaceAttr(groups []string, a slog.Attr) slog.Attr {
 		errorAttrs := []slog.Attr{
 			slog.String("message", err.Error()),
 		}
-		if stackErr, ok := errors.AsType[stackTracer](err); ok {
-			errorAttrs = append(errorAttrs, slog.Any("stack", stackErr.StackTrace()))
-		}
+		// if stackErr, ok := errors.AsType[stackTracer](err); ok {
+		// 	errorAttrs = append(errorAttrs, slog.Any("stack", stackErr.StackTrace()))
+		// }
 		errorAttrs = append(errorAttrs, apperr.Attrs(err)...)
 		return slog.GroupAttrs("error", errorAttrs...)
 	}
