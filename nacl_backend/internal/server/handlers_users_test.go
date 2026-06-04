@@ -25,32 +25,28 @@ func TestHandlerCreateUser(t *testing.T) {
 		{"special chars", "test+user@example.com", "p@$$w0rd!", 201},
 	}
 
+	testDB := newTestDB(t)
+	defer testDB.Close()
+
+	server := newTestServer(t, testDB)
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Setup
-			testDB := newTestDB(t)
-			defer testDB.Close()
+			cleanupTestDB(t, testDB, "users")
 
-			server := newTestServer(t, testDB)
-
-			// Create request
 			body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, tt.username, tt.password)
 			req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
-			// Execute
 			server.handlerCreateUser(rr, req)
 
-			// Assert status code
 			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 
-			// For success cases, verify response and database
 			if tt.wantCode == 201 {
 				assert.Contains(t, rr.Body.String(), "username")
 				assert.Contains(t, rr.Body.String(), tt.username)
 
-				// Verify in database
 				ctx := context.Background()
 				user, err := testDB.Queries().GetUserByUsername(ctx, tt.username)
 				assert.NoError(t, err)

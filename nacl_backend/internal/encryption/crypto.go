@@ -4,7 +4,6 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"fmt"
 
 	"golang.org/x/crypto/argon2"
 )
@@ -20,11 +19,11 @@ func GenerateRandomBytes(n int) []byte {
 
 func DeriveKey(password string, salt []byte) ([]byte, error) {
 	if len(salt) != 32 {
-		return nil, fmt.Errorf("salt must be 32 bytes, got %d", len(salt))
+		return nil, ErrInvalidLengthSalt
 	}
 
 	if len(password) == 0 {
-		return nil, fmt.Errorf("password cannot be empty string")
+		return nil, ErrInvalidLengthPassword
 	}
 	derivedKey := argon2.Key([]byte(password), salt, 3, 32*1024, 4, 32)
 
@@ -34,10 +33,10 @@ func DeriveKey(password string, salt []byte) ([]byte, error) {
 // caller can get string with -> base64.StdEncoding.EncodeToString(returnedCiphertext)
 func Encrypt(toEncrypt, key []byte) ([]byte, error) {
 	if len(key) != 32 {
-		return nil, fmt.Errorf("key must be 32 bytes, got %d", len(key))
+		return nil, ErrInvalidLengthKey
 	}
 	if len(toEncrypt) == 0 {
-		return nil, fmt.Errorf("bytes to array can't be empty")
+		return nil, ErrEmptyPlaintext
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -62,7 +61,7 @@ func Encrypt(toEncrypt, key []byte) ([]byte, error) {
 // caller can get string with -> string(returnedPlaintext)
 func Decrypt(ciphertext, key []byte) ([]byte, error) {
 	if len(key) != 32 {
-		return nil, fmt.Errorf("key must be 32 bytes, got %d", len(key))
+		return nil, ErrInvalidLengthKey
 	}
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -76,7 +75,7 @@ func Decrypt(ciphertext, key []byte) ([]byte, error) {
 
 	nonceSize := aesGCM.NonceSize()
 	if len(ciphertext) < nonceSize {
-		return nil, fmt.Errorf("ciphertext too short")
+		return nil, ErrCiphertextShort
 	}
 
 	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]

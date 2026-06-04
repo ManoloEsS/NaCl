@@ -50,6 +50,7 @@ func NewServer(
 	// r.Post("/login", s.handlerLogin)
 
 	r.Post("/api/users", s.handlerCreateUser)
+	r.Post("/api/login", s.handlerLogin)
 
 	return s
 }

@@ -8,12 +8,12 @@ import (
 type Validator interface {
 	Validate() error
 }
-type CreateUserRequest struct {
+type UserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-func (ur *CreateUserRequest) Validate() error {
+func (ur *UserRequest) Validate() error {
 	if strings.TrimSpace(ur.Username) == "" {
 		return fmt.Errorf("username is required")
 	}
