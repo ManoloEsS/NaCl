@@ -47,10 +47,10 @@ func NewServer(
 
 	r.Get("/", s.handlerIndex)
 
-	// r.Post("/login", s.handlerLogin)
-
 	r.Post("/api/users", s.handlerCreateUser)
 	r.Post("/api/login", s.handlerLogin)
+	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
+		Post("/api/services", s.handlerCreateService)
 
 	return s
 }
