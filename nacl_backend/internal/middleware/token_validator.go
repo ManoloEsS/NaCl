@@ -30,12 +30,12 @@ func TokenValidator(logger *slog.Logger, secret string) func(http.Handler) http.
 				return
 			}
 
-			userId, err := auth.ValidateJWT(token, secret)
+			userID, err := auth.ValidateJWT(token, secret)
 			if err != nil {
 				sendErrorResponse(err, w, logger)
 				return
 			}
-			ctx := auth.WithUserId(r.Context(), userId)
+			ctx := auth.WithUserID(r.Context(), userID)
 			r = r.WithContext(ctx)
 
 			next.ServeHTTP(w, r)

@@ -95,11 +95,11 @@ func TestHandlerLogin(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.loginWantCode, rr.Code, "unexpected status code")
-			assert.IsType(t, uuid.UUID{}, userDataLogin.Id, "login response does not contain UUID id")
+			assert.IsType(t, uuid.UUID{}, userDataLogin.ID, "login response does not contain UUID id")
 
 			if !tt.expectError {
 				assert.Equal(t, user.Username, userDataLogin.Username)
-				assert.NotEqual(t, uuid.Nil, userDataLogin.Id, "expected id to be not nil")
+				assert.NotEqual(t, uuid.Nil, userDataLogin.ID, "expected id to be not nil")
 				return
 			}
 
