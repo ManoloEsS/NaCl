@@ -14,7 +14,7 @@ func TestPasswordHash(t *testing.T) {
 	}{
 		{
 			name:        "password matches",
-			password:    "password",
+			password:    testPass,
 			expectedErr: false,
 		},
 		{

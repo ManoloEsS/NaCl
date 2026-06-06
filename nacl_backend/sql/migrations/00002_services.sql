@@ -2,7 +2,7 @@
 CREATE TABLE services (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     service TEXT NOT NULL,
-    service_username BYTEA NOT NULL,
+    encrypted_service_username BYTEA NOT NULL,
     description TEXT,
     encrypted_password BYTEA NOT NULL,
     encryption_algorithm TEXT NOT NULL,

@@ -1,7 +1,7 @@
 -- name: CreateService :one
 INSERT INTO services (
     service,
-    service_username,
+    encrypted_service_username,
     description,
     encrypted_password,
     encryption_algorithm,
@@ -22,7 +22,7 @@ WHERE user_id = $1;
 
 -- name: UpdateService :exec
 UPDATE services
-SET service_username = $1,
+SET encrypted_service_username = $1,
     description = $2,
     encrypted_password = $3,
     encryption_algorithm = $4,

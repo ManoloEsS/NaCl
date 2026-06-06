@@ -14,8 +14,8 @@ type contextKey struct {
 // userIDKey is an unexported pointer to a contextKey, ensuring no other package can use this same context key
 var userIDKey = &contextKey{"userID"}
 
-// WithUserId stores the user ID in the context, retrieved by.UserIDFromContext
-func WithUserId(ctx context.Context, id uuid.UUID) context.Context {
+// WithUserID stores the user ID in the context, retrieved by UserIDFromContext.
+func WithUserID(ctx context.Context, id uuid.UUID) context.Context {
 	return context.WithValue(ctx, userIDKey, id)
 }
 

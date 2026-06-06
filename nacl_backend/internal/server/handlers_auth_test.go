@@ -16,6 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testUser = "test_user"
+const testPass = "password"
+
 func TestHandlerLogin(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -28,27 +31,27 @@ func TestHandlerLogin(t *testing.T) {
 	}{
 		{
 			"login successfull",
-			"test_user",
-			"password",
-			"test_user",
-			"password",
+			testUser,
+			testPass,
+			testUser,
+			testPass,
 			false,
 			200,
 		},
 		{
 			"unsuccessful login with wrong username",
-			"test_user",
-			"password",
+			testUser,
+			testPass,
 			"wrong_username",
-			"password",
+			testPass,
 			true,
 			401,
 		},
 		{
 			"unsuccessful login with wrong password",
-			"test_user",
-			"password",
-			"test_user",
+			testUser,
+			testPass,
+			testUser,
 			"wrong_pass",
 			true,
 			401,
@@ -95,11 +98,11 @@ func TestHandlerLogin(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.loginWantCode, rr.Code, "unexpected status code")
-			assert.IsType(t, uuid.UUID{}, userDataLogin.Id, "login response does not contain UUID id")
+			assert.IsType(t, uuid.UUID{}, userDataLogin.ID, "login response does not contain UUID id")
 
 			if !tt.expectError {
 				assert.Equal(t, user.Username, userDataLogin.Username)
-				assert.NotEqual(t, uuid.Nil, userDataLogin.Id, "expected id to be not nil")
+				assert.NotEqual(t, uuid.Nil, userDataLogin.ID, "expected id to be not nil")
 				return
 			}
 

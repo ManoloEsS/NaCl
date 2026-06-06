@@ -4,9 +4,30 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"fmt"
 
 	"golang.org/x/crypto/argon2"
 )
+
+type Algo int
+
+const (
+	InvalidAlgo Algo = iota
+	AES
+)
+
+var EncryptionAlgos = map[string]Algo{
+	"aes-gcm": AES,
+}
+
+func ValidAlgorithm(name string) (Algo, error) {
+	algo, ok := EncryptionAlgos[name]
+	if !ok {
+		return 0, fmt.Errorf("algorithm not found")
+	}
+
+	return algo, nil
+}
 
 func GenerateRandomBytes(n int) []byte {
 	b := make([]byte, n)

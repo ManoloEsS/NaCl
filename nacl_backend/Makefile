@@ -1,4 +1,4 @@
-.PHONY: dev dev-full db-start db-stop db-restart db-migrate db-down db-reset db-new db-status db-test-clean db-init build run test clean
+.PHONY: dev dev-full db-start db-stop db-restart db-migrate db-down db-reset db-new db-status db-test-clean db-init build run test clean ci fmt fmt-check
 
 # Load .env file
 include .env
@@ -103,3 +103,14 @@ clean:
 # Lint: run ci linter
 lint:
 	golangci-lint run
+
+# Format: auto-fix Go formatting
+fmt:
+	gofmt -w .
+
+# Format check: fail if unformatted files exist (mirrors CI)
+fmt-check:
+	@test -z "$$(gofmt -l .)" || (echo "Unformatted files:" && gofmt -l . && exit 1)
+
+# CI: run the same lint and format checks as CI
+ci: fmt-check lint

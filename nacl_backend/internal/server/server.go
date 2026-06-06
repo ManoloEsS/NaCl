@@ -16,7 +16,7 @@ import (
 
 type Server struct {
 	Config     *config.Config
-	HttpServer *http.Server
+	HTTPServer *http.Server
 	Db         *db.Database
 	Logger     *slog.Logger
 }
@@ -35,7 +35,7 @@ func NewServer(
 
 	s := &Server{
 		Config:     config,
-		HttpServer: srv,
+		HTTPServer: srv,
 		Db:         db,
 		Logger:     logger,
 	}
@@ -47,16 +47,16 @@ func NewServer(
 
 	r.Get("/", s.handlerIndex)
 
-	// r.Post("/login", s.handlerLogin)
-
 	r.Post("/api/users", s.handlerCreateUser)
 	r.Post("/api/login", s.handlerLogin)
+	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
+		Post("/api/services", s.handlerCreateService)
 
 	return s
 }
 
 func (s *Server) Start() error {
-	ln, err := net.Listen("tcp", s.HttpServer.Addr)
+	ln, err := net.Listen("tcp", s.HTTPServer.Addr)
 	if err != nil {
 		return err
 	}
@@ -67,12 +67,12 @@ func (s *Server) Start() error {
 	}
 	s.Logger.Debug(fmt.Sprintf("Salt is running on http://localhost:%d", tcpAddr.Port))
 
-	if err := s.HttpServer.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
+	if err := s.HTTPServer.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
 		return err
 	}
 	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	return s.HttpServer.Shutdown(ctx)
+	return s.HTTPServer.Shutdown(ctx)
 }
