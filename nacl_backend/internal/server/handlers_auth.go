@@ -50,7 +50,7 @@ func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.MakeJWT(convertedUUID, s.Config.JwtSecret, time.Minute*30)
 	if err != nil {
 		err = apperr.WithAttrs(
-			fmt.Errorf("could not produce token: %v", err),
+			fmt.Errorf("could not produce token: %w", err),
 			"user", loginData.Username,
 			"endpoint", endpointData,
 		)
