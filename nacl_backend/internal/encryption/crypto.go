@@ -9,18 +9,18 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-type EncryptionAlgo int
+type Algo int
 
 const (
-	InvalidAlgo EncryptionAlgo = iota
+	InvalidAlgo Algo = iota
 	AES
 )
 
-var EncryptionAlgos = map[string]EncryptionAlgo{
+var EncryptionAlgos = map[string]Algo{
 	"aes-gcm": AES,
 }
 
-func ValidAlgorithm(name string) (EncryptionAlgo, error) {
+func ValidAlgorithm(name string) (Algo, error) {
 	algo, ok := EncryptionAlgos[name]
 	if !ok {
 		return 0, fmt.Errorf("algorithm not found")

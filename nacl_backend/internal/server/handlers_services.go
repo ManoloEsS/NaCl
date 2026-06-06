@@ -14,16 +14,16 @@ import (
 )
 
 var (
-	invalidUserId = errors.New("user id is not valid")
+	errInvalidUserID = errors.New("user id is not valid")
 )
 
 func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
-	userId, ok := auth.UserIDFromContext(r.Context())
+	userID, ok := auth.UserIDFromContext(r.Context())
 
-	if userId == uuid.Nil || !ok {
+	if userID == uuid.Nil || !ok {
 		err := apperr.WithAttrs(
-			fmt.Errorf("could not get user id: %w", invalidUserId),
+			fmt.Errorf("could not get user id: %w", errInvalidUserID),
 			"enpoint", endpointReqPath,
 		)
 		s.RespondWithError(
@@ -35,7 +35,7 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pgID := pgtype.UUID{
-		Bytes: userId,
+		Bytes: userID,
 		Valid: true,
 	}
 
