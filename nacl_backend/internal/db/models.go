@@ -19,15 +19,15 @@ type Operation struct {
 }
 
 type Service struct {
-	ID                  pgtype.UUID      `json:"id"`
-	Service             string           `json:"service"`
-	ServiceUsername     []byte           `json:"service_username"`
-	Description         pgtype.Text      `json:"description"`
-	EncryptedPassword   []byte           `json:"encrypted_password"`
-	EncryptionAlgorithm string           `json:"encryption_algorithm"`
-	UserID              pgtype.UUID      `json:"user_id"`
-	CreatedAt           pgtype.Timestamp `json:"created_at"`
-	UpdatedAt           pgtype.Timestamp `json:"updated_at"`
+	ID                       pgtype.UUID      `json:"id"`
+	Service                  string           `json:"service"`
+	EncryptedServiceUsername []byte           `json:"encrypted_service_username"`
+	Description              pgtype.Text      `json:"description"`
+	EncryptedPassword        []byte           `json:"encrypted_password"`
+	EncryptionAlgorithm      string           `json:"encryption_algorithm"`
+	UserID                   pgtype.UUID      `json:"user_id"`
+	CreatedAt                pgtype.Timestamp `json:"created_at"`
+	UpdatedAt                pgtype.Timestamp `json:"updated_at"`
 }
 
 type User struct {
