@@ -16,6 +16,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const testUser = "test_user"
+const testPass = "password"
+
 func TestHandlerLogin(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -28,27 +31,27 @@ func TestHandlerLogin(t *testing.T) {
 	}{
 		{
 			"login successfull",
-			"test_user",
-			"password",
-			"test_user",
-			"password",
+			testUser,
+			testPass,
+			testUser,
+			testPass,
 			false,
 			200,
 		},
 		{
 			"unsuccessful login with wrong username",
-			"test_user",
-			"password",
+			testUser,
+			testPass,
 			"wrong_username",
-			"password",
+			testPass,
 			true,
 			401,
 		},
 		{
 			"unsuccessful login with wrong password",
-			"test_user",
-			"password",
-			"test_user",
+			testUser,
+			testPass,
+			testUser,
 			"wrong_pass",
 			true,
 			401,

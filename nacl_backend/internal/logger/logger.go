@@ -9,14 +9,14 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 )
 
-type closeLogger func() error
+type CloseLogger func() error
 
 // type stackTracer interface {
 // 	error
 // 	StackTrace() pkgerr.StackTrace
 // }
 
-func InitializeLogger(logFile string) (*slog.Logger, closeLogger, error) {
+func InitializeLogger(logFile string) (*slog.Logger, CloseLogger, error) {
 	debugHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level:       slog.LevelDebug,
 		ReplaceAttr: replaceAttr,
