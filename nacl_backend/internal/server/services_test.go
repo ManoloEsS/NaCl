@@ -138,4 +138,3 @@ func TestHandlerCreateService(t *testing.T) {
 
 	cleanupTestDB(t, testDB, "users")
 }
-
