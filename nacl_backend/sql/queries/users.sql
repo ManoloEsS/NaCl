@@ -12,7 +12,7 @@ VALUES (
     $3,
     $4
     )
-    RETURNING username, password_hash;
+    RETURNING *;
 
 -- name: DeleteUser :exec
 DELETE FROM users
