@@ -11,8 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testCreatePass = "password123"
-
 func TestHandlerCreateUser(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -20,10 +18,10 @@ func TestHandlerCreateUser(t *testing.T) {
 		password string
 		wantCode int
 	}{
-		{"success", "testuser", testCreatePass, 201},
-		{"empty username", "", testCreatePass, 400},
+		{"success", "testuser", "password123", 201},
+		{"empty username", "", "password123", 400},
 		{"empty password", "testuser", "", 400},
-		{"long username", strings.Repeat("a", 100), testCreatePass, 201},
+		{"long username", strings.Repeat("a", 100), "password123", 201},
 		{"special chars", "test+user@example.com", "p@$$w0rd!", 201},
 	}
 
@@ -67,7 +65,7 @@ func TestHandlerCreateUser_Duplicate(t *testing.T) {
 	server := newTestServer(t, testDB)
 
 	// Create first user
-	body := fmt.Sprintf(`{"username": "duplicate", "password": "%s"}`, testCreatePass)
+	body := `{"username": "duplicate", "password": "password123"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()

@@ -13,7 +13,7 @@ import (
 type Querier interface {
 	CreateOperation(ctx context.Context, arg CreateOperationParams) (Operation, error)
 	CreateService(ctx context.Context, arg CreateServiceParams) (Service, error)
-	CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteServiceById(ctx context.Context, arg DeleteServiceByIdParams) error
 	DeleteUser(ctx context.Context, id pgtype.UUID) error
 	GetAllServicesForUserId(ctx context.Context, userID pgtype.UUID) ([]Service, error)

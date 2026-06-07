@@ -40,6 +40,12 @@ func NewServer(
 		Logger:     logger,
 	}
 
+	s.RegisterRoutes(r)
+
+	return s
+}
+
+func (s *Server) RegisterRoutes(r chi.Router) {
 	r.Use(
 		middleware.RequestLogger(s.Logger),
 		middleware.Recovery(s.Logger),
@@ -51,8 +57,6 @@ func NewServer(
 	r.Post("/api/login", s.handlerLogin)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
 		Post("/api/services", s.handlerCreateService)
-
-	return s
 }
 
 func (s *Server) Start() error {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
@@ -65,6 +66,38 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		)
 		s.RespondWithError(
 			w,
+			http.StatusBadRequest,
+			"could not create service",
+			err,
+		)
+		return
+	}
+
+	passMatch, err := auth.CheckPasswordHash(serviceData.UserPassword, userData.PasswordHash)
+	if !passMatch || err != nil {
+		err = apperr.WithAttrs(
+			fmt.Errorf("password does not match user password: %w", err),
+			"user", userData.Username,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(
+			w,
+			http.StatusUnauthorized,
+			"could not create service",
+			err,
+		)
+		return
+	}
+
+	decodedSalt, err := base64.StdEncoding.DecodeString(userData.MasterKeySalt)
+	if err != nil {
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not decode master key salt: %w", err),
+			"user", userData.Username,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(
+			w,
 			http.StatusInternalServerError,
 			"could not create service",
 			err,
@@ -72,7 +105,7 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	derivedKey, err := encryption.DeriveKey(serviceData.UserPassword, []byte(userData.MasterKeySalt))
+	derivedKey, err := encryption.DeriveKey(serviceData.UserPassword, decodedSalt)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not get derived key: %w", err),
@@ -88,7 +121,23 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	masterKey, err := encryption.Decrypt([]byte(userData.EncryptedMasterKey), derivedKey)
+	decodedMasterKey, err := base64.StdEncoding.DecodeString(userData.EncryptedMasterKey)
+	if err != nil {
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not decode encrypted master key: %w", err),
+			"user", userData.Username,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(
+			w,
+			http.StatusInternalServerError,
+			"could not create service",
+			err,
+		)
+		return
+	}
+
+	masterKey, err := encryption.Decrypt(decodedMasterKey, derivedKey)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not decrypt master key: %w", err),

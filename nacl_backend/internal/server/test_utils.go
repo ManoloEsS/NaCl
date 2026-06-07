@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"os"
 	"strings"
 	"testing"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/config"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
+	"github.com/go-chi/chi/v5"
 )
 
 func cleanupTestDB(t *testing.T, database *db.Database, tables ...string) {
@@ -56,9 +58,16 @@ func newTestServer(t *testing.T, database *db.Database) *Server {
 		Level: slog.LevelError,
 	}))
 
-	return &Server{
+	s := &Server{
 		Config: cfg,
 		Db:     database,
 		Logger: logger,
 	}
+
+	r := chi.NewRouter()
+	s.RegisterRoutes(r)
+
+	s.HTTPServer = &http.Server{Handler: r}
+
+	return s
 }

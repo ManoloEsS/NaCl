@@ -19,7 +19,7 @@ VALUES (
     $3,
     $4
     )
-    RETURNING username, password_hash
+    RETURNING id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -29,20 +29,23 @@ type CreateUserParams struct {
 	EncryptedMasterKey string `json:"encrypted_master_key"`
 }
 
-type CreateUserRow struct {
-	Username     string `json:"username"`
-	PasswordHash string `json:"password_hash"`
-}
-
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, createUser,
 		arg.Username,
 		arg.PasswordHash,
 		arg.MasterKeySalt,
 		arg.EncryptedMasterKey,
 	)
-	var i CreateUserRow
-	err := row.Scan(&i.Username, &i.PasswordHash)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.MasterKeySalt,
+		&i.EncryptedMasterKey,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
 	return i, err
 }
 

@@ -3,6 +3,7 @@ package server
 import (
 	"testing"
 
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +15,7 @@ func TestPasswordHash(t *testing.T) {
 	}{
 		{
 			name:        "password matches",
-			password:    testPass,
+			password:    "password",
 			expectedErr: false,
 		},
 		{
@@ -31,20 +32,16 @@ func TestPasswordHash(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := newTestDB(t)
-			defer d.Close()
-			s := newTestServer(t, d)
-
-			hashedPassword, err := s.hashPassword(tt.password)
+			hashedPassword, err := auth.HashPassword(tt.password)
 			assert.NoError(t, err, "expected err to be nil, got %v", err)
 
 			if tt.expectedErr == true {
-				match, _ := s.checkPasswordHash("wrongpass", hashedPassword)
+				match, _ := auth.CheckPasswordHash("wrongpass", hashedPassword)
 				assert.False(t, match, "expected false match")
 				return
 			}
 
-			match, _ := s.checkPasswordHash(tt.password, hashedPassword)
+			match, _ := auth.CheckPasswordHash(tt.password, hashedPassword)
 			assert.True(t, match, "expected match to be true")
 		})
 	}

@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const testSecret = "test"
-
 func TestJWT(t *testing.T) {
 	tests := []struct {
 		name         string
@@ -24,16 +22,16 @@ func TestJWT(t *testing.T) {
 		{
 			name:         "valid",
 			userID:       uuid.New(),
-			tokenSecret:  testSecret,
+			tokenSecret:  "test",
 			expiresIn:    time.Duration(time.Second * 30),
-			validateWith: testSecret,
+			validateWith: "test",
 			sleepTime:    time.Millisecond * 1,
 			expectError:  false,
 		},
 		{
 			name:         "invalid",
 			userID:       uuid.New(),
-			tokenSecret:  testSecret,
+			tokenSecret:  "test",
 			expiresIn:    time.Duration(time.Second * 30),
 			validateWith: "wrong",
 			sleepTime:    time.Millisecond * 1,
@@ -42,7 +40,7 @@ func TestJWT(t *testing.T) {
 		{
 			name:        "expired",
 			userID:      uuid.New(),
-			tokenSecret: testSecret,
+			tokenSecret: "test",
 			expiresIn:   time.Duration(time.Millisecond * 5),
 			sleepTime:   time.Millisecond * 20,
 			expectError: true,
