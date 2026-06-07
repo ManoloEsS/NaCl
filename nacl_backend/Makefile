@@ -10,7 +10,7 @@ dev:
 
 # Full dev: init db, start db, migrate, run dev
 dev-full: db-start
-	sleep 5
+	sleep 1
 	$(MAKE) db-init
 	$(MAKE) db-migrate
 	$(MAKE) dev
@@ -33,7 +33,7 @@ db-start:
 			-p 5432:5432 \
 			postgres:18
 	@echo "Waiting for PostgreSQL to be ready..."
-	@sleep 3
+	@sleep 2
 	@$(MAKE) db-init
 
 # Database: stop container
