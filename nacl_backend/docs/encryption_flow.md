@@ -67,6 +67,40 @@ NACL uses a **two-key encryption system**:
 
 ---
 
+## Base64 Encoding Boundary
+
+The encryption functions (`DeriveKey`, `Encrypt`, `Decrypt`) operate exclusively on raw bytes (`[]byte`). PostgreSQL text columns store strings. This creates a **boundary** where data must be converted between `[]byte` and `string`.
+
+### The Rule
+
+| Direction | Function | Example |
+|-----------|----------|---------|
+| **Storage** (raw bytes → string) | `base64.StdEncoding.EncodeToString()` | `encodedSalt := base64.StdEncoding.EncodeToString(salt)` |
+| **Retrieval** (string → raw bytes) | `base64.StdEncoding.DecodeString()` | `salt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)` |
+
+### Fields Affected
+
+| Database Column | Stored As | Decode Before Use |
+|----------------|-----------|-------------------|
+| `users.masterKeySalt` | Base64 string | `base64.StdEncoding.DecodeString()` → pass to `DeriveKey()` |
+| `users.encryptedMasterKey` | Base64 string | `base64.StdEncoding.DecodeString()` → pass to `Decrypt()` |
+
+### Common Mistake
+
+Never convert a base64 string to bytes by casting:
+
+```go
+// WRONG: gives ASCII bytes of the base64 string, not the original data
+salt := []byte(user.MasterKeySalt)  // []byte("MWkwRjRW...") — wrong!
+
+// CORRECT: decodes the base64 string back to the original raw bytes
+salt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)  // 32 bytes
+```
+
+Casting `[]byte(string)` on a base64-encoded value produces the wrong length and wrong data. `DeriveKey` requires exactly 32 bytes for the salt — a base64 string cast to `[]byte` will be longer and will fail with "length of salt must be 32 bytes".
+
+---
+
 ## Two Types of Passwords
 
 ### Login Password (Master Password)
@@ -176,14 +210,18 @@ loginPassword: "MyMasterPassword123!"  -- To authorize encryption
 
 Step 1: Fetch user from database
   └─ SELECT * FROM users WHERE id = :userId
-      → Returns: masterKeySalt, encryptedMasterKey
+      → Returns: masterKeySalt (base64 string), encryptedMasterKey (base64 string)
 
-Step 2: Derive encryption key from login password
-  └─ derivedKey = Argon2id(loginPassword, masterKeySalt)
+Step 2: Decode base64 fields for cryptographic use
+  ├─ decodedSalt = base64.StdEncoding.DecodeString(masterKeySalt)
+  └─ decodedMasterKey = base64.StdEncoding.DecodeString(encryptedMasterKey)
+
+Step 3: Derive encryption key from login password
+  └─ derivedKey = Argon2id(loginPassword, decodedSalt)
       → Same derived key as registration (same password + salt)
 
-Step 3: Decrypt master key
-  └─ masterKey = AES-GCM-decrypt(encryptedMasterKey, derivedKey)
+Step 3: Decrypt master key with derived key
+  └─ masterKey = AES-GCM-decrypt(decodedMasterKey, derivedKey)
       → Recovers original 32-byte random master key
 
 Step 4: Encrypt service password with master key
@@ -242,22 +280,27 @@ loginPassword: "MyMasterPassword123!"  -- To authorize decryption
 
 Step 1: Fetch user from database
   └─ SELECT * FROM users WHERE id = :userId
-      → Returns: masterKeySalt, encryptedMasterKey
+      → Returns: masterKeySalt (base64 string), encryptedMasterKey (base64 string)
 
 Step 2: Fetch cipher from database
   └─ SELECT * FROM ciphers WHERE id = :serviceId AND userId = :userId
-      → Returns: encryptedPassword, nonce, encryptionAlgorithm
+      → Returns: encryptedPassword (base64 string), nonce (base64 string), encryptionAlgorithm
 
-Step 3: Derive encryption key from login password
-  └─ derivedKey = Argon2id(loginPassword, masterKeySalt)
+Step 3: Decode base64 fields for cryptographic use
+  ├─ decodedSalt = base64.StdEncoding.DecodeString(masterKeySalt)
+  ├─ decodedMasterKey = base64.StdEncoding.DecodeString(encryptedMasterKey)
+  └─ decodedPassword = base64.StdEncoding.DecodeString(encryptedPassword)
+
+Step 4: Derive encryption key from login password
+  └─ derivedKey = Argon2id(loginPassword, decodedSalt)
       → Same derived key as before
 
-Step 4: Decrypt master key
-  └─ masterKey = AES-GCM-decrypt(encryptedMasterKey, derivedKey)
+Step 5: Decrypt master key with derived key
+  └─ masterKey = AES-GCM-decrypt(decodedMasterKey, derivedKey)
       → Recovers original 32-byte random master key
 
-Step 5: Decrypt service password
-  └─ plaintext = AES-GCM-decrypt(encryptedPassword, masterKey, nonce)
+Step 6: Decrypt service password
+  └─ plaintext = AES-GCM-decrypt(decodedPassword, masterKey)
       → Returns: "GmailPassword456!"
 
 Step 6: Update lastUsedAt timestamp
@@ -297,10 +340,12 @@ Step 1: Verify old password
       → Must return true
 
 Step 2: Derive old encryption key
-  └─ oldDerivedKey = Argon2id(oldPassword, masterKeySalt)
+  └─ decodedSalt = base64.StdEncoding.DecodeString(masterKeySalt)
+  └─ oldDerivedKey = Argon2id(oldPassword, decodedSalt)
 
 Step 3: Decrypt master key with old derived key
-  └─ masterKey = AES-GCM-decrypt(encryptedMasterKey, oldDerivedKey)
+  └─ decodedMasterKey = base64.StdEncoding.DecodeString(encryptedMasterKey)
+  └─ masterKey = AES-GCM-decrypt(decodedMasterKey, oldDerivedKey)
       → Recovers original 32-byte random master key
       → ✅ Ciphers remain encrypted with this same master key!
 
