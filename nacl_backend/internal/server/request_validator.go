@@ -1,11 +1,33 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
 )
+
+// validator interface to validate objects coming from the client
+// client - server shared shapes
+
+// takes a Validator interaface and a reader and returns an instance of
+// the Validator and an error. Used in handlers to decode and validate request body
+// into a preset request struct
+func decodeAndValidate[T Validator](body io.Reader) (T, error) {
+	var req T
+
+	if err := json.NewDecoder(body).Decode(&req); err != nil {
+		return req, err
+	}
+
+	if err := req.Validate(); err != nil {
+		return req, err
+	}
+
+	return req, nil
+}
 
 type Validator interface {
 	Validate() error

@@ -34,7 +34,7 @@ func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	match, err := s.checkPasswordHash(loginData.Password, user.PasswordHash)
+	match, err := auth.CheckPasswordHash(loginData.Password, user.PasswordHash)
 	if !match || err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("invalid credentials: %w", err),

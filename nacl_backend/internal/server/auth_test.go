@@ -10,14 +10,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
-
-const testUser = "test_user"
-const testPass = "password"
 
 func TestHandlerLogin(t *testing.T) {
 	tests := []struct {
@@ -31,27 +29,27 @@ func TestHandlerLogin(t *testing.T) {
 	}{
 		{
 			"login successfull",
-			testUser,
-			testPass,
-			testUser,
-			testPass,
+			"test_user",
+			"password",
+			"test_user",
+			"password",
 			false,
 			200,
 		},
 		{
 			"unsuccessful login with wrong username",
-			testUser,
-			testPass,
+			"test_user",
+			"password",
 			"wrong_username",
-			testPass,
+			"password",
 			true,
 			401,
 		},
 		{
 			"unsuccessful login with wrong password",
-			testUser,
-			testPass,
-			testUser,
+			"test_user",
+			"password",
+			"test_user",
 			"wrong_pass",
 			true,
 			401,
@@ -67,7 +65,7 @@ func TestHandlerLogin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cleanupTestDB(t, testDB, "users")
 
-			passHash, err := server.hashPassword(tt.passwordCreate)
+			passHash, err := auth.HashPassword(tt.passwordCreate)
 			if err != nil {
 				t.Errorf("could not hash passwordCreate: %v", err)
 			}

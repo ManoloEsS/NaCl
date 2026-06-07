@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
 )
@@ -47,7 +48,7 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedPassword, err := s.hashPassword(userData.Password)
+	hashedPassword, err := auth.HashPassword(userData.Password)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not hash password: %w", err),
@@ -76,5 +77,5 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.RespondWithJSON(w, 201, created)
+	s.RespondWithJSON(w, 201, UserResponse{ID: created.ID.Bytes, Username: created.Username})
 }
