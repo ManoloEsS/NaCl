@@ -89,10 +89,10 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decodedSalt, err := base64.StdEncoding.DecodeString(userData.MasterKeySalt)
+	newService, err := newCreateServiceParams(serviceData, userData)
 	if err != nil {
 		err = apperr.WithAttrs(
-			fmt.Errorf("could not decode master key salt: %w", err),
+			err,
 			"user", userData.Username,
 			"endpoint", endpointReqPath,
 		)
@@ -105,94 +105,7 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	derivedKey, err := encryption.DeriveKey(serviceData.UserPassword, decodedSalt)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not get derived key: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	decodedMasterKey, err := base64.StdEncoding.DecodeString(userData.EncryptedMasterKey)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not decode encrypted master key: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	masterKey, err := encryption.Decrypt(decodedMasterKey, derivedKey)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not decrypt master key: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	encryptedUsername, err := encryption.Encrypt([]byte(serviceData.Username), masterKey)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not encrypt username: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	encrytedPassword, err := encryption.Encrypt([]byte(serviceData.Password), masterKey)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not encrypt password: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	created, err := query.CreateService(r.Context(), db.CreateServiceParams{
-		Service:                  serviceData.Service,
-		EncryptedServiceUsername: encryptedUsername,
-		EncryptedPassword:        encrytedPassword,
-		Description:              pgtype.Text{String: serviceData.Description, Valid: true},
-		EncryptionAlgorithm:      serviceData.EncryptionAlgorithm,
-		UserID:                   userData.ID,
-	})
+	created, err := query.CreateService(r.Context(), newService)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could insert service record: %w", err),
@@ -209,4 +122,47 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.RespondWithJSON(w, http.StatusCreated, created)
+}
+
+func newCreateServiceParams(service *ServiceRequest, user db.User) (db.CreateServiceParams, error) {
+	decodedSalt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)
+	if err != nil {
+		return db.CreateServiceParams{}, fmt.Errorf("could not decode master key salt: %w", err)
+	}
+
+	derivedKey, err := encryption.DeriveKey(service.UserPassword, decodedSalt)
+	if err != nil {
+		return db.CreateServiceParams{}, fmt.Errorf("could not derive key: %w", err)
+	}
+
+	decodedMasterKey, err := base64.StdEncoding.DecodeString(user.EncryptedMasterKey)
+	if err != nil {
+		return db.CreateServiceParams{}, fmt.Errorf("could not decode encrypted master key: %w", err)
+	}
+
+	masterKey, err := encryption.Decrypt(decodedMasterKey, derivedKey)
+	if err != nil {
+		return db.CreateServiceParams{}, fmt.Errorf("could not decrypt master key: %w", err)
+	}
+
+	encryptedUsername, err := encryption.Encrypt([]byte(service.Username), masterKey)
+	if err != nil {
+		return db.CreateServiceParams{}, fmt.Errorf("could not encrypt username: %w", err)
+	}
+
+	encrytedPassword, err := encryption.Encrypt([]byte(service.Password), masterKey)
+	if err != nil {
+		return db.CreateServiceParams{}, fmt.Errorf("could not encrypt password: %w", err)
+	}
+
+	newService := db.CreateServiceParams{
+		Service:                  service.Service,
+		EncryptedServiceUsername: encryptedUsername,
+		EncryptedPassword:        encrytedPassword,
+		Description:              pgtype.Text{String: service.Description, Valid: true},
+		EncryptionAlgorithm:      service.EncryptionAlgorithm,
+		UserID:                   user.ID,
+	}
+
+	return newService, nil
 }
