@@ -3,6 +3,8 @@ tmp_dir = "tmp"
 
 [build]
 cmd = "go build -o ./tmp/main ."
-bin = "./tmp/main"
+entrypoint = "./tmp/main"
 include_ext = ["go"]
 exclude_dir = ["tmp", "vendor", "sql", "docs", "bin"]
+send_interrupt = true
+kill_delay = 500
