@@ -299,9 +299,9 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			test_token := tt.setupFunc(tt.token)
+			testToken := tt.setupFunc(tt.token)
 			req := httptest.NewRequest(http.MethodGet, "/api/services", nil)
-			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", test_token))
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testToken))
 			rr := httptest.NewRecorder()
 
 			server.HTTPServer.Handler.ServeHTTP(rr, req)
@@ -309,7 +309,8 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 			bodyJSON, err := io.ReadAll(rr.Body)
 			assert.NoError(t, err, "error reading recorder body")
 			var servicesResponse []ServiceMetadataResponse
-			json.Unmarshal(bodyJSON, &servicesResponse)
+			err = json.Unmarshal(bodyJSON, &servicesResponse)
+			assert.NoError(t, err, "unexpected error")
 
 			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 			assert.Equal(t, tt.wantCount, len(servicesResponse))
