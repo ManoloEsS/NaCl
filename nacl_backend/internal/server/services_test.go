@@ -305,14 +305,17 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			server.HTTPServer.Handler.ServeHTTP(rr, req)
+			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 
+			if tt.wantCode != 200 {
+				return
+			}
 			bodyJSON, err := io.ReadAll(rr.Body)
 			assert.NoError(t, err, "error reading recorder body")
 			var servicesResponse []ServiceMetadataResponse
 			err = json.Unmarshal(bodyJSON, &servicesResponse)
 			assert.NoError(t, err, "unexpected error")
 
-			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 			assert.Equal(t, tt.wantCount, len(servicesResponse))
 			if tt.wantCount > 0 {
 				assert.Equal(t, services[0].service, servicesResponse[0].Service)
