@@ -61,6 +61,8 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 		Post("/api/services", s.handlerCreateService)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
 		Get("/api/services", s.handlerGetAllServicesUser)
+	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
+		Post("/api/services/{id}/credentials", s.handlerDecryptById)
 }
 
 func (s *Server) Start() error {
