@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -21,7 +22,7 @@ INSERT INTO services (
     user_id
     )
 VALUES($1, $2, $3, $4, $5, $6)
-RETURNING id, service, encrypted_service_username, description, encrypted_password, encryption_algorithm, user_id, created_at, updated_at
+RETURNING id, service, description, encryption_algorithm
 `
 
 type CreateServiceParams struct {
@@ -30,10 +31,17 @@ type CreateServiceParams struct {
 	Description              pgtype.Text `json:"description"`
 	EncryptedPassword        []byte      `json:"encrypted_password"`
 	EncryptionAlgorithm      string      `json:"encryption_algorithm"`
-	UserID                   pgtype.UUID `json:"user_id"`
+	UserID                   uuid.UUID   `json:"user_id"`
 }
 
-func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (Service, error) {
+type CreateServiceRow struct {
+	ID                  uuid.UUID   `json:"id"`
+	Service             string      `json:"service"`
+	Description         pgtype.Text `json:"description"`
+	EncryptionAlgorithm string      `json:"encryption_algorithm"`
+}
+
+func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (CreateServiceRow, error) {
 	row := q.db.QueryRow(ctx, createService,
 		arg.Service,
 		arg.EncryptedServiceUsername,
@@ -42,17 +50,12 @@ func (q *Queries) CreateService(ctx context.Context, arg CreateServiceParams) (S
 		arg.EncryptionAlgorithm,
 		arg.UserID,
 	)
-	var i Service
+	var i CreateServiceRow
 	err := row.Scan(
 		&i.ID,
 		&i.Service,
-		&i.EncryptedServiceUsername,
 		&i.Description,
-		&i.EncryptedPassword,
 		&i.EncryptionAlgorithm,
-		&i.UserID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -63,8 +66,8 @@ WHERE id = $1 AND user_id = $2
 `
 
 type DeleteServiceByIdParams struct {
-	ID     pgtype.UUID `json:"id"`
-	UserID pgtype.UUID `json:"user_id"`
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) DeleteServiceById(ctx context.Context, arg DeleteServiceByIdParams) error {
@@ -73,30 +76,32 @@ func (q *Queries) DeleteServiceById(ctx context.Context, arg DeleteServiceByIdPa
 }
 
 const getAllServicesForUserId = `-- name: GetAllServicesForUserId :many
-SELECT id, service, encrypted_service_username, description, encrypted_password, encryption_algorithm, user_id, created_at, updated_at 
+SELECT id, service, description, encryption_algorithm 
 FROM services
 WHERE user_id = $1
 `
 
-func (q *Queries) GetAllServicesForUserId(ctx context.Context, userID pgtype.UUID) ([]Service, error) {
+type GetAllServicesForUserIdRow struct {
+	ID                  uuid.UUID   `json:"id"`
+	Service             string      `json:"service"`
+	Description         pgtype.Text `json:"description"`
+	EncryptionAlgorithm string      `json:"encryption_algorithm"`
+}
+
+func (q *Queries) GetAllServicesForUserId(ctx context.Context, userID uuid.UUID) ([]GetAllServicesForUserIdRow, error) {
 	rows, err := q.db.Query(ctx, getAllServicesForUserId, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Service{}
+	items := []GetAllServicesForUserIdRow{}
 	for rows.Next() {
-		var i Service
+		var i GetAllServicesForUserIdRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Service,
-			&i.EncryptedServiceUsername,
 			&i.Description,
-			&i.EncryptedPassword,
 			&i.EncryptionAlgorithm,
-			&i.UserID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -114,7 +119,7 @@ FROM services
 WHERE id = $1
 `
 
-func (q *Queries) GetServiceById(ctx context.Context, id pgtype.UUID) (Service, error) {
+func (q *Queries) GetServiceById(ctx context.Context, id uuid.UUID) (Service, error) {
 	row := q.db.QueryRow(ctx, getServiceById, id)
 	var i Service
 	err := row.Scan(
@@ -146,8 +151,8 @@ type UpdateServiceParams struct {
 	Description              pgtype.Text `json:"description"`
 	EncryptedPassword        []byte      `json:"encrypted_password"`
 	EncryptionAlgorithm      string      `json:"encryption_algorithm"`
-	ID                       pgtype.UUID `json:"id"`
-	UserID                   pgtype.UUID `json:"user_id"`
+	ID                       uuid.UUID   `json:"id"`
+	UserID                   uuid.UUID   `json:"user_id"`
 }
 
 func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) error {

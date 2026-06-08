@@ -8,7 +8,7 @@ package db
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -54,7 +54,7 @@ DELETE FROM users
 WHERE id = $1
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, id pgtype.UUID) error {
+func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteUser, id)
 	return err
 }
@@ -63,7 +63,7 @@ const getUserById = `-- name: GetUserById :one
 SELECT id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at FROM users WHERE id = $1
 `
 
-func (q *Queries) GetUserById(ctx context.Context, id pgtype.UUID) (User, error) {
+func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRow(ctx, getUserById, id)
 	var i User
 	err := row.Scan(
@@ -104,8 +104,8 @@ WHERE id = $2
 `
 
 type UpdateUserKeyParams struct {
-	EncryptedMasterKey string      `json:"encrypted_master_key"`
-	ID                 pgtype.UUID `json:"id"`
+	EncryptedMasterKey string    `json:"encrypted_master_key"`
+	ID                 uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error {
@@ -121,8 +121,8 @@ RETURNING id, username, password_hash, master_key_salt, encrypted_master_key, cr
 `
 
 type UpdateUserPasswordHashParams struct {
-	PasswordHash string      `json:"password_hash"`
-	ID           pgtype.UUID `json:"id"`
+	PasswordHash string    `json:"password_hash"`
+	ID           uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error) {
@@ -147,8 +147,8 @@ WHERE id = $2
 `
 
 type UpdateUserSaltParams struct {
-	MasterKeySalt string      `json:"master_key_salt"`
-	ID            pgtype.UUID `json:"id"`
+	MasterKeySalt string    `json:"master_key_salt"`
+	ID            uuid.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateUserSalt(ctx context.Context, arg UpdateUserSaltParams) error {

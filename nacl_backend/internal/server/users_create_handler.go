@@ -77,5 +77,5 @@ func (s *Server) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.RespondWithJSON(w, 201, UserResponse{ID: created.ID.Bytes, Username: created.Username})
+	s.RespondWithJSON(w, 201, UserResponse{ID: created.ID, Username: created.Username})
 }

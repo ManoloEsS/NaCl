@@ -35,13 +35,8 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pgID := pgtype.UUID{
-		Bytes: userID,
-		Valid: true,
-	}
-
 	query := s.Db.Queries()
-	userData, err := query.GetUserById(r.Context(), pgID)
+	userData, err := query.GetUserById(r.Context(), userID)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not get user data: %w", err),

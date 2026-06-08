@@ -7,7 +7,6 @@ import (
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
-	"github.com/google/uuid"
 )
 
 func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
@@ -45,9 +44,7 @@ func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var convertedUUID uuid.UUID = user.ID.Bytes
-
-	token, err := auth.MakeJWT(convertedUUID, s.Config.JwtSecret, time.Minute*30)
+	token, err := auth.MakeJWT(user.ID, s.Config.JwtSecret, time.Minute*30)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not produce token: %w", err),
@@ -58,7 +55,7 @@ func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userResponse := UserResponse{user.ID.Bytes, user.Username}
+	userResponse := UserResponse{user.ID, user.Username}
 
 	s.RespondWithJSON(w, 200, LoginResponse{userResponse, token})
 }
