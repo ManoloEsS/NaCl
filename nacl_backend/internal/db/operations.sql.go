@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -24,10 +25,10 @@ RETURNING id, user_id, type, service, service_id, description, created_at
 `
 
 type CreateOperationParams struct {
-	UserID      pgtype.UUID `json:"user_id"`
+	UserID      uuid.UUID   `json:"user_id"`
 	Type        string      `json:"type"`
 	Service     string      `json:"service"`
-	ServiceID   pgtype.UUID `json:"service_id"`
+	ServiceID   uuid.UUID   `json:"service_id"`
 	Description pgtype.Text `json:"description"`
 }
 
@@ -59,8 +60,8 @@ WHERE service = $1 AND user_id = $2
 `
 
 type GetOperationsForServiceParams struct {
-	Service string      `json:"service"`
-	UserID  pgtype.UUID `json:"user_id"`
+	Service string    `json:"service"`
+	UserID  uuid.UUID `json:"user_id"`
 }
 
 func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperationsForServiceParams) ([]Operation, error) {
@@ -97,7 +98,7 @@ FROM operations
 WHERE user_id = $1
 `
 
-func (q *Queries) GetOperationsForUserId(ctx context.Context, userID pgtype.UUID) ([]Operation, error) {
+func (q *Queries) GetOperationsForUserId(ctx context.Context, userID uuid.UUID) ([]Operation, error) {
 	rows, err := q.db.Query(ctx, getOperationsForUserId, userID)
 	if err != nil {
 		return nil, err
@@ -133,8 +134,8 @@ WHERE id = $2 AND user_id = $3
 
 type UpdateOperationDescParams struct {
 	Description pgtype.Text `json:"description"`
-	ID          pgtype.UUID `json:"id"`
-	UserID      pgtype.UUID `json:"user_id"`
+	ID          uuid.UUID   `json:"id"`
+	UserID      uuid.UUID   `json:"user_id"`
 }
 
 func (q *Queries) UpdateOperationDesc(ctx context.Context, arg UpdateOperationDescParams) error {

@@ -5,33 +5,34 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Operation struct {
-	ID          pgtype.UUID      `json:"id"`
-	UserID      pgtype.UUID      `json:"user_id"`
+	ID          uuid.UUID        `json:"id"`
+	UserID      uuid.UUID        `json:"user_id"`
 	Type        string           `json:"type"`
 	Service     string           `json:"service"`
-	ServiceID   pgtype.UUID      `json:"service_id"`
+	ServiceID   uuid.UUID        `json:"service_id"`
 	Description pgtype.Text      `json:"description"`
 	CreatedAt   pgtype.Timestamp `json:"created_at"`
 }
 
 type Service struct {
-	ID                       pgtype.UUID      `json:"id"`
+	ID                       uuid.UUID        `json:"id"`
 	Service                  string           `json:"service"`
 	EncryptedServiceUsername []byte           `json:"encrypted_service_username"`
 	Description              pgtype.Text      `json:"description"`
 	EncryptedPassword        []byte           `json:"encrypted_password"`
 	EncryptionAlgorithm      string           `json:"encryption_algorithm"`
-	UserID                   pgtype.UUID      `json:"user_id"`
+	UserID                   uuid.UUID        `json:"user_id"`
 	CreatedAt                pgtype.Timestamp `json:"created_at"`
 	UpdatedAt                pgtype.Timestamp `json:"updated_at"`
 }
 
 type User struct {
-	ID                 pgtype.UUID      `json:"id"`
+	ID                 uuid.UUID        `json:"id"`
 	Username           string           `json:"username"`
 	PasswordHash       string           `json:"password_hash"`
 	MasterKeySalt      string           `json:"master_key_salt"`

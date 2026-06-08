@@ -54,9 +54,13 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 	r.Get("/", s.handlerIndex)
 
 	r.Post("/api/users", s.handlerCreateUser)
+
 	r.Post("/api/login", s.handlerLogin)
+
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
 		Post("/api/services", s.handlerCreateService)
+	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
+		Get("/api/services", s.handlerGetAllServicesUser)
 }
 
 func (s *Server) Start() error {
