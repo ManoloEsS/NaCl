@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -321,6 +322,133 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 				assert.Equal(t, services[0].service, servicesResponse[0].Service)
 				assert.Equal(t, services[0].description, servicesResponse[0].Description)
 				assert.Equal(t, services[0].algo, servicesResponse[0].EncryptionAlgorithm)
+			}
+		})
+	}
+
+}
+
+func TestHandlerDecryptById(t *testing.T) {
+	testDB := newTestDB(t)
+	defer testDB.Close()
+	cleanupTestDB(t, testDB, "users", "services")
+
+	server := newTestServer(t, testDB)
+
+	testUser := "test_services_user"
+	testPass := "test_services_pass"
+
+	// create user
+	body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
+
+	// login as user
+	body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr = httptest.NewRecorder()
+
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
+
+	var loginResp LoginResponse
+	err := json.NewDecoder(rr.Body).Decode(&loginResp)
+	assert.NoError(t, err, "could not decode login response")
+	token := loginResp.Token
+
+	// create service
+	serviceRequest := ServiceRequest{
+		Service:             "test_service_1",
+		Username:            "test_user",
+		Description:         "description",
+		Password:            "service_pass_1",
+		EncryptionAlgorithm: "aes-gcm",
+		UserPassword:        testPass,
+	}
+
+	requestJSON, _ := json.Marshal(serviceRequest)
+	req = httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	rr = httptest.NewRecorder()
+
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
+
+	var serviceData ServiceMetadataResponse
+	bodyReader, err := io.ReadAll(rr.Body)
+	assert.NoError(t, err, "unexpected error")
+
+	err = json.Unmarshal(bodyReader, &serviceData)
+	assert.NoError(t, err, "unexpected error")
+
+	tests := []struct {
+		name      string
+		token     string
+		userPass  string
+		serviceID uuid.UUID
+		wantCode  int
+	}{
+		{
+			name:      "successfully decrypts and responds with decrypted service data",
+			token:     token,
+			userPass:  testPass,
+			serviceID: serviceData.ID,
+			wantCode:  200,
+		},
+		{
+			name:      "unauthorized request fails - wrong token",
+			token:     "wrong-token",
+			userPass:  testPass,
+			serviceID: serviceData.ID,
+			wantCode:  401,
+		},
+		{
+			name:      "unauthorized request fails - wrong user password in body",
+			token:     token,
+			userPass:  "wrong_pass",
+			serviceID: serviceData.ID,
+			wantCode:  401,
+		},
+		{
+			name:      "invalid service id request fails",
+			token:     token,
+			userPass:  testPass,
+			serviceID: uuid.New(),
+			wantCode:  404,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			decryptRequest := CredentialsRequest{
+				Password: tt.userPass,
+			}
+			requestJSON, _ := json.Marshal(decryptRequest)
+			urlPath := fmt.Sprintf("/api/services/%s/credentials", tt.serviceID.String())
+			req = httptest.NewRequest(http.MethodPost, urlPath, strings.NewReader(string(requestJSON)))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tt.token))
+			rr = httptest.NewRecorder()
+
+			server.HTTPServer.Handler.ServeHTTP(rr, req)
+			assert.Equal(t, tt.wantCode, rr.Code)
+
+			if tt.wantCode == 200 {
+				bodyJSON, err := io.ReadAll(rr.Body)
+				assert.NoError(t, err, "error reading recorder body")
+				var credentialsResponse ServiceCredentialsResponse
+				err = json.Unmarshal(bodyJSON, &credentialsResponse)
+				assert.NoError(t, err, "unexpected error")
+
+				assert.Equal(t, serviceRequest.Username, credentialsResponse.ServiceUsername)
+				assert.Equal(t, serviceRequest.Password, credentialsResponse.Password)
+				assert.Equal(t, serviceRequest.EncryptionAlgorithm, credentialsResponse.EncryptionAlgorithm)
 			}
 		})
 	}

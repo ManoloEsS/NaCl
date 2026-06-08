@@ -46,6 +46,10 @@ type ServiceRequest struct {
 	UserPassword        string `json:"user_password"`
 }
 
+type CredentialsRequest struct {
+	Password string `json:"password"`
+}
+
 func (ur *UserRequest) Validate() error {
 	if strings.TrimSpace(ur.Username) == "" {
 		return fmt.Errorf("username is required")
@@ -75,6 +79,14 @@ func (sr *ServiceRequest) Validate() error {
 	}
 
 	if strings.TrimSpace(sr.UserPassword) == "" {
+		return fmt.Errorf("user password is required")
+	}
+
+	return nil
+}
+
+func (cr *CredentialsRequest) Validate() error {
+	if strings.TrimSpace(cr.Password) == "" {
 		return fmt.Errorf("user password is required")
 	}
 
