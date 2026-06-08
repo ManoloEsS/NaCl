@@ -8,7 +8,7 @@ INSERT INTO services (
     user_id
     )
 VALUES($1, $2, $3, $4, $5, $6)
-RETURNING *;
+RETURNING id, service, description, encryption_algorithm;
 
 -- name: GetServiceById :one
 SELECT *
@@ -16,7 +16,7 @@ FROM services
 WHERE id = $1;
 
 -- name: GetAllServicesForUserId :many
-SELECT * 
+SELECT id, service, description, encryption_algorithm 
 FROM services
 WHERE user_id = $1;
 
