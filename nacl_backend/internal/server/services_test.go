@@ -385,6 +385,7 @@ func TestHandlerDecryptById(t *testing.T) {
 	assert.NoError(t, err, "unexpected error")
 
 	err = json.Unmarshal(bodyReader, &serviceData)
+	assert.NoError(t, err, "unexpected error")
 
 	tests := []struct {
 		name      string
