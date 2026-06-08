@@ -1,6 +1,8 @@
 package server
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 )
 
@@ -21,4 +23,14 @@ type ServiceMetadataResponse struct {
 	Service             string    `json:"service"`
 	Description         string    `json:"description"`
 	EncryptionAlgorithm string    `json:"encryption_algorithm"`
+}
+
+type ServiceCredentialsResponse struct {
+	Service             string    `json:"service"`
+	ServiceUsername     string    `json:"service_username"`
+	Description         string    `json:"description"`
+	Password            string    `json:"encrypted_password"`
+	EncryptionAlgorithm string    `json:"encryption_algorithm"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
 }
