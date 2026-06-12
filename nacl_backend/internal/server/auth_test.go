@@ -12,12 +12,13 @@ import (
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandlerLogin(t *testing.T) {
+func TestHandleLogin(t *testing.T) {
 	tests := []struct {
 		name           string
 		usernameCreate string
@@ -69,11 +70,19 @@ func TestHandlerLogin(t *testing.T) {
 			if err != nil {
 				t.Errorf("could not hash passwordCreate: %v", err)
 			}
+			salt, err := encryption.GenerateRandomBytes(32)
+			if err != nil {
+				t.Fatalf("could not generate salt: %v", err)
+			}
+			key, err := encryption.GenerateRandomBytes(32)
+			if err != nil {
+				t.Fatalf("could not generate key: %v", err)
+			}
 			newUserData := db.CreateUserParams{
 				Username:           tt.usernameCreate,
 				PasswordHash:       passHash,
-				MasterKeySalt:      base64.StdEncoding.EncodeToString(encryption.GenerateRandomBytes(32)),
-				EncryptedMasterKey: base64.StdEncoding.EncodeToString(encryption.GenerateRandomBytes(32)),
+				MasterKeySalt:      base64.StdEncoding.EncodeToString(salt),
+				EncryptedMasterKey: base64.StdEncoding.EncodeToString(key),
 			}
 
 			queries := testDB.Queries()
@@ -87,9 +96,9 @@ func TestHandlerLogin(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
-			server.handlerLogin(rr, req)
+			server.HandleLogin(rr, req)
 
-			var userDataLogin LoginResponse
+			var userDataLogin dto.LoginResponse
 			err = json.NewDecoder(rr.Body).Decode(&userDataLogin)
 			if err != nil {
 				t.Errorf("could not decode user data from login: %v", err)

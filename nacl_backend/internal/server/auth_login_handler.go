@@ -1,17 +1,18 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 )
 
-func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	endpointData := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
-	loginData, err := decodeAndValidate[*UserRequest](r.Body)
+	loginData, err := dto.DecodeAndValidate[*dto.LoginRequest](r.Body)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not validate login data: %w", err),
@@ -21,41 +22,24 @@ func (s *Server) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := s.Db.Queries()
-	user, err := query.GetUserByUsername(r.Context(), loginData.Username)
+	result, err := s.Svc.Login(r.Context(), loginData.Username, loginData.Password)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			s.RespondWithError(w, http.StatusUnauthorized, "could not log in", apperr.WithAttrs(
+				fmt.Errorf("invalid credentials: %w", err),
+				"username", loginData.Username,
+				"endpoint", endpointData,
+			))
+			return
+		}
 		err = apperr.WithAttrs(
-			fmt.Errorf("could not retrieve user: %w", err),
-			"user", loginData.Username,
-			"endpoint", endpointData,
-		)
-		s.RespondWithError(w, http.StatusUnauthorized, "could not log in", err)
-		return
-	}
-
-	match, err := auth.CheckPasswordHash(loginData.Password, user.PasswordHash)
-	if !match || err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("invalid credentials: %w", err),
-			"user", loginData.Username,
-			"endpoint", endpointData,
-		)
-		s.RespondWithError(w, http.StatusUnauthorized, "could not log in", err)
-		return
-	}
-
-	token, err := auth.MakeJWT(user.ID, s.Config.JwtSecret, time.Minute*30)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not produce token: %w", err),
-			"user", loginData.Username,
+			fmt.Errorf("could not log in: %w", err),
+			"username", loginData.Username,
 			"endpoint", endpointData,
 		)
 		s.RespondWithError(w, http.StatusInternalServerError, "could not log in", err)
 		return
 	}
 
-	userResponse := UserResponse{user.ID, user.Username}
-
-	s.RespondWithJSON(w, 200, LoginResponse{userResponse, token})
+	s.RespondWithJSON(w, http.StatusOK, result)
 }

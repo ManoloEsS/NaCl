@@ -1,19 +1,19 @@
 package server
 
 import (
-	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func (s *Server) handlerUpdateServicePass(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleUpdateServicePassword(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 	userID, ok := auth.UserIDFromContext(r.Context())
 	if userID == uuid.Nil || !ok {
@@ -29,7 +29,7 @@ func (s *Server) handlerUpdateServicePass(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	serviceReq, err := decodeAndValidate[*UpdateServiceRequest](r.Body)
+	serviceReq, err := dto.DecodeAndValidate[*dto.UpdateServiceRequest](r.Body)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not process payload: %w", err),
@@ -59,11 +59,34 @@ func (s *Server) handlerUpdateServicePass(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	query := s.Db.Queries()
-	userData, err := query.GetUserById(r.Context(), userID)
+	result, err := s.Svc.UpdateServicePassword(r.Context(), userID, serviceID, serviceReq)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			s.RespondWithError(
+				w, http.StatusUnauthorized,
+				"could not update service",
+				apperr.WithAttrs(
+					fmt.Errorf("invalid credentials: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
+		if errors.Is(err, service.ErrUserNotFound) {
+			s.RespondWithError(
+				w, http.StatusUnauthorized,
+				"not authorized",
+				apperr.WithAttrs(
+					fmt.Errorf("user not found: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
 		err = apperr.WithAttrs(
-			fmt.Errorf("could not get user data: %w", err),
+			fmt.Errorf("could not update service: %w", err),
 			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
@@ -75,99 +98,5 @@ func (s *Server) handlerUpdateServicePass(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	match, err := auth.CheckPasswordHash(serviceReq.UserPassword, userData.PasswordHash)
-	if !match || err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("user password does not match: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w, http.StatusUnauthorized,
-			"could not update service",
-			err,
-		)
-		return
-	}
-
-	updateServiceParams, err := newUpdateServiceParams(
-		serviceID,
-		serviceReq,
-		&userData,
-	)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not create update service parameters struct: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w, http.StatusInternalServerError,
-			"could not update service",
-			err,
-		)
-		return
-	}
-
-	updatedService, err := query.UpdateService(r.Context(), *updateServiceParams)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not update service in db: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w, http.StatusInternalServerError,
-			"could not update service",
-			err,
-		)
-		return
-	}
-
-	s.RespondWithJSON(w, http.StatusOK, ServiceMetadataResponse{
-		ID:                  updatedService.ID,
-		Service:             updatedService.Service,
-		Description:         updatedService.Description.String,
-		EncryptionAlgorithm: updatedService.EncryptionAlgorithm,
-	})
-
-}
-
-func newUpdateServiceParams(
-	serviceID uuid.UUID,
-	serviceReq *UpdateServiceRequest,
-	user *db.User,
-) (*db.UpdateServiceParams, error) {
-	decodedSalt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)
-	if err != nil {
-		return &db.UpdateServiceParams{}, fmt.Errorf("could not decode master key salt: %w", err)
-	}
-
-	derivedKey, err := encryption.DeriveKey(serviceReq.UserPassword, decodedSalt)
-	if err != nil {
-		return &db.UpdateServiceParams{}, fmt.Errorf("could not derive key: %w", err)
-	}
-
-	decodedMasterKey, err := base64.StdEncoding.DecodeString(user.EncryptedMasterKey)
-	if err != nil {
-		return &db.UpdateServiceParams{}, fmt.Errorf("could not decode encrypted master key: %w", err)
-	}
-
-	masterKey, err := encryption.Decrypt(decodedMasterKey, derivedKey)
-	if err != nil {
-		return &db.UpdateServiceParams{}, fmt.Errorf("could not decrypt master key: %w", err)
-	}
-
-	encryptedNewPass, err := encryption.Encrypt([]byte(serviceReq.Password), masterKey)
-	if err != nil {
-		return &db.UpdateServiceParams{}, fmt.Errorf("could not encrypt new password: %w", err)
-	}
-
-	updateService := db.UpdateServiceParams{
-		EncryptedPassword:   encryptedNewPass,
-		EncryptionAlgorithm: serviceReq.EncryptionAlgorithm,
-		ID:                  serviceID,
-		UserID:              user.ID,
-	}
-	return &updateService, nil
+	s.RespondWithJSON(w, http.StatusOK, result)
 }

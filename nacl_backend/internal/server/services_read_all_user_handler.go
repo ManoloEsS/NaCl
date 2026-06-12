@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Server) handlerGetAllServicesUser(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleListServices(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 	userID, ok := auth.UserIDFromContext(r.Context())
 
@@ -26,12 +26,11 @@ func (s *Server) handlerGetAllServicesUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	query := s.Db.Queries()
-	services, err := query.GetAllServicesForUserId(r.Context(), userID)
+	result, err := s.Svc.ListServices(r.Context(), userID)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not get services for user: %w", err),
-			"userID", userID,
+			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
@@ -43,23 +42,5 @@ func (s *Server) handlerGetAllServicesUser(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	processedServices := make([]ServiceMetadataResponse, len(services))
-	for i, service := range services {
-		var description string
-
-		if service.Description.Valid {
-			description = service.Description.String
-		}
-
-		processed := ServiceMetadataResponse{
-			ID:                  service.ID,
-			Service:             service.Service,
-			Description:         description,
-			EncryptionAlgorithm: service.EncryptionAlgorithm,
-		}
-
-		processedServices[i] = processed
-	}
-
-	s.RespondWithJSON(w, 200, processedServices)
+	s.RespondWithJSON(w, http.StatusOK, result)
 }

@@ -11,13 +11,14 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/config"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/middleware"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
 type Server struct {
 	Config     *config.Config
 	HTTPServer *http.Server
-	Db         *db.Database
+	Svc        *service.Service
 	Logger     *slog.Logger
 }
 
@@ -33,10 +34,12 @@ func NewServer(
 		Handler: r,
 	}
 
+	svc := service.New(db, config)
+
 	s := &Server{
 		Config:     config,
 		HTTPServer: srv,
-		Db:         db,
+		Svc:        svc,
 		Logger:     logger,
 	}
 
@@ -51,20 +54,20 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 		middleware.Recovery(s.Logger),
 	)
 
-	r.Get("/", s.handlerIndex)
+	r.Get("/", s.HandleIndex)
 
-	r.Post("/api/users", s.handlerCreateUser)
+	r.Post("/api/users", s.HandleCreateUser)
 
-	r.Post("/api/login", s.handlerLogin)
+	r.Post("/api/login", s.HandleLogin)
 
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Post("/api/services", s.handlerCreateService)
+		Post("/api/services", s.HandleCreateService)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Get("/api/services", s.handlerGetAllServicesUser)
+		Get("/api/services", s.HandleListServices)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Post("/api/services/{id}/credentials", s.handlerDecryptByID)
+		Post("/api/services/{id}/credentials", s.HandleDecryptServiceByID)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Patch("/api/services/{id}", s.handlerUpdateServicePass)
+		Patch("/api/services/{id}", s.HandleUpdateServicePassword)
 }
 
 func (s *Server) Start() error {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/config"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -60,7 +61,7 @@ func newTestServer(t *testing.T, database *db.Database) *Server {
 
 	s := &Server{
 		Config: cfg,
-		Db:     database,
+		Svc:    service.New(database, cfg),
 		Logger: logger,
 	}
 
