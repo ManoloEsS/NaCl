@@ -11,11 +11,6 @@ import (
 
 type CloseLogger func() error
 
-// type stackTracer interface {
-// 	error
-// 	StackTrace() pkgerr.StackTrace
-// }
-
 func InitializeLogger(logFile string) (*slog.Logger, CloseLogger, error) {
 	debugHandler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
 		Level:       slog.LevelDebug,
@@ -62,9 +57,6 @@ func replaceAttr(groups []string, a slog.Attr) slog.Attr {
 		errorAttrs := []slog.Attr{
 			slog.String("message", err.Error()),
 		}
-		// if stackErr, ok := errors.AsType[stackTracer](err); ok {
-		// 	errorAttrs = append(errorAttrs, slog.Any("stack", stackErr.StackTrace()))
-		// }
 		errorAttrs = append(errorAttrs, apperr.Attrs(err)...)
 		return slog.GroupAttrs("error", errorAttrs...)
 	}
