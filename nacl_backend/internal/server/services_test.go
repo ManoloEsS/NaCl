@@ -116,7 +116,7 @@ func TestHandlerCreateService(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cleanupTestDB(t, testDB, "services")
 
-			serviceRequest := ServiceRequest{
+			serviceRequest := NewServiceRequest{
 				Service:             tt.service,
 				Username:            tt.username,
 				Description:         tt.description,
@@ -218,7 +218,7 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 	}
 
 	for _, service := range services {
-		serviceRequest := ServiceRequest{
+		serviceRequest := NewServiceRequest{
 			Service:             service.service,
 			Username:            service.username,
 			Description:         service.description,
@@ -362,7 +362,7 @@ func TestHandlerDecryptById(t *testing.T) {
 	token := loginResp.Token
 
 	// create service
-	serviceRequest := ServiceRequest{
+	serviceRequest := NewServiceRequest{
 		Service:             "test_service_1",
 		Username:            "test_user",
 		Description:         "description",
@@ -449,6 +449,124 @@ func TestHandlerDecryptById(t *testing.T) {
 				assert.Equal(t, serviceRequest.Username, credentialsResponse.ServiceUsername)
 				assert.Equal(t, serviceRequest.Password, credentialsResponse.Password)
 				assert.Equal(t, serviceRequest.EncryptionAlgorithm, credentialsResponse.EncryptionAlgorithm)
+			}
+		})
+	}
+
+}
+
+func TestUpdateServicePassHandler(t *testing.T) {
+	testDB := newTestDB(t)
+	defer testDB.Close()
+	cleanupTestDB(t, testDB, "users", "services")
+
+	server := newTestServer(t, testDB)
+
+	testUser := "test_services_user"
+	testPass := "test_services_pass"
+
+	// create user
+	body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr := httptest.NewRecorder()
+
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
+
+	// login as user
+	body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rr = httptest.NewRecorder()
+
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
+
+	var loginResp LoginResponse
+	err := json.NewDecoder(rr.Body).Decode(&loginResp)
+	assert.NoError(t, err, "could not decode login response")
+	token := loginResp.Token
+
+	// create service
+	serviceRequest := NewServiceRequest{
+		Service:             "test_service_1",
+		Username:            "test_user",
+		Description:         "description",
+		Password:            "service_pass_1",
+		EncryptionAlgorithm: "aes-gcm",
+		UserPassword:        testPass,
+	}
+
+	requestJSON, _ := json.Marshal(serviceRequest)
+	req = httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	rr = httptest.NewRecorder()
+
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
+
+	var serviceData ServiceMetadataResponse
+	bodyReader, err := io.ReadAll(rr.Body)
+	assert.NoError(t, err, "unexpected error")
+
+	err = json.Unmarshal(bodyReader, &serviceData)
+	assert.NoError(t, err, "unexpected error")
+
+	serviceID := serviceData.ID
+
+	tests := []struct {
+		name          string
+		token         string
+		updateRequest UpdateServiceRequest
+		serviceID     uuid.UUID
+		wantCode      int
+	}{
+		{
+			name:  "successfully updates password of service",
+			token: token,
+			updateRequest: UpdateServiceRequest{
+				Password:            "new_password",
+				EncryptionAlgorithm: "aes-gcm",
+				UserPassword:        testPass,
+			},
+			serviceID: serviceID,
+			wantCode:  200,
+		},
+		{
+			name:  "fails with invalid request object",
+			token: token,
+			updateRequest: UpdateServiceRequest{
+				Password:     "new_pass",
+				UserPassword: testPass,
+			},
+			serviceID: serviceID,
+			wantCode:  400,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			requestJSON, _ := json.Marshal(tt.updateRequest)
+			urlPath := fmt.Sprintf("/api/services/%s", tt.serviceID.String())
+			req = httptest.NewRequest(http.MethodPatch, urlPath, strings.NewReader(string(requestJSON)))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tt.token))
+			rr = httptest.NewRecorder()
+
+			if tt.wantCode == 200 {
+				server.HTTPServer.Handler.ServeHTTP(rr, req)
+				assert.Equal(t, tt.wantCode, rr.Code)
+
+				var updatedServiceData ServiceMetadataResponse
+				bodyReader, err := io.ReadAll(rr.Body)
+				assert.NoError(t, err, "unexpected error")
+
+				err = json.Unmarshal(bodyReader, &updatedServiceData)
+				assert.NoError(t, err, "unexpected error")
+
+				assert.Equal(t, serviceData, updatedServiceData, "should not be equal")
 			}
 		})
 	}
