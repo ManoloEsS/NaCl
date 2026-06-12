@@ -1,24 +1,18 @@
 package server
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var (
-	errInvalidUserID = errors.New("user id is not valid")
-)
-
-func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleCreateService(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 	userID, ok := auth.UserIDFromContext(r.Context())
 
@@ -35,28 +29,10 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := s.Db.Queries()
-	userData, err := query.GetUserById(r.Context(), userID)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not get user data: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	serviceData, err := decodeAndValidate[*NewServiceRequest](r.Body)
+	serviceData, err := dto.DecodeAndValidate[*dto.CreateServiceRequest](r.Body)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not process payload: %w", err),
-			"user", userData.Username,
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
@@ -68,43 +44,35 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	passMatch, err := auth.CheckPasswordHash(serviceData.UserPassword, userData.PasswordHash)
-	if !passMatch || err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("password does not match user password: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusUnauthorized,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	newService, err := newCreateServiceParams(serviceData, &userData)
+	result, err := s.Svc.CreateService(r.Context(), userID, serviceData)
 	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			s.RespondWithError(
+				w, http.StatusUnauthorized,
+				"could not create service",
+				apperr.WithAttrs(
+					fmt.Errorf("invalid credentials: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
+		if errors.Is(err, service.ErrUserNotFound) {
+			s.RespondWithError(
+				w, http.StatusUnauthorized,
+				"not authorized",
+				apperr.WithAttrs(
+					fmt.Errorf("user not found: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
 		err = apperr.WithAttrs(
 			err,
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not create service",
-			err,
-		)
-		return
-	}
-
-	created, err := query.CreateService(r.Context(), *newService)
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could insert service record: %w", err),
-			"user", userData.Username,
+			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
@@ -116,48 +84,5 @@ func (s *Server) handlerCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.RespondWithJSON(w, http.StatusCreated, created)
-}
-
-func newCreateServiceParams(service *NewServiceRequest, user *db.User) (*db.CreateServiceParams, error) {
-	decodedSalt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)
-	if err != nil {
-		return &db.CreateServiceParams{}, fmt.Errorf("could not decode master key salt: %w", err)
-	}
-
-	derivedKey, err := encryption.DeriveKey(service.UserPassword, decodedSalt)
-	if err != nil {
-		return &db.CreateServiceParams{}, fmt.Errorf("could not derive key: %w", err)
-	}
-
-	decodedMasterKey, err := base64.StdEncoding.DecodeString(user.EncryptedMasterKey)
-	if err != nil {
-		return &db.CreateServiceParams{}, fmt.Errorf("could not decode encrypted master key: %w", err)
-	}
-
-	masterKey, err := encryption.Decrypt(decodedMasterKey, derivedKey)
-	if err != nil {
-		return &db.CreateServiceParams{}, fmt.Errorf("could not decrypt master key: %w", err)
-	}
-
-	encryptedUsername, err := encryption.Encrypt([]byte(service.Username), masterKey)
-	if err != nil {
-		return &db.CreateServiceParams{}, fmt.Errorf("could not encrypt username: %w", err)
-	}
-
-	encrytedPassword, err := encryption.Encrypt([]byte(service.Password), masterKey)
-	if err != nil {
-		return &db.CreateServiceParams{}, fmt.Errorf("could not encrypt password: %w", err)
-	}
-
-	newService := db.CreateServiceParams{
-		Service:                  service.Service,
-		EncryptedServiceUsername: encryptedUsername,
-		EncryptedPassword:        encrytedPassword,
-		Description:              pgtype.Text{String: service.Description, Valid: true},
-		EncryptionAlgorithm:      service.EncryptionAlgorithm,
-		UserID:                   user.ID,
-	}
-
-	return &newService, nil
+	s.RespondWithJSON(w, http.StatusCreated, result)
 }

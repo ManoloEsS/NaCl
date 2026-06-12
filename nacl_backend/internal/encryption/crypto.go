@@ -59,13 +59,13 @@ func ValidAlgorithm(name string) (Algo, error) {
 
 // GenerateRandomBytes returns cryptographically secure random bytes of the
 // given length. Used for generating salts, nonces, and master keys.
-func GenerateRandomBytes(n int) []byte {
+func GenerateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	if _, err := rand.Read(b); err != nil {
-		panic(err)
+		return nil, fmt.Errorf("could not generate random bytes: %w", err)
 	}
 
-	return b
+	return b, nil
 }
 
 // DeriveKey derives a 32-byte key from a password and salt using Argon2id.

@@ -11,9 +11,11 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
 )
 
-func TestHandlerCreateService(t *testing.T) {
+func TestHandleCreateService(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 	cleanupTestDB(t, testDB, "users")
@@ -39,7 +41,7 @@ func TestHandlerCreateService(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
 
-	var loginResp LoginResponse
+	var loginResp dto.LoginResponse
 	err := json.NewDecoder(rr.Body).Decode(&loginResp)
 	assert.NoError(t, err, "could not decode login response")
 	token := loginResp.Token
@@ -116,7 +118,7 @@ func TestHandlerCreateService(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cleanupTestDB(t, testDB, "services")
 
-			serviceRequest := NewServiceRequest{
+			serviceRequest := dto.CreateServiceRequest{
 				Service:             tt.service,
 				Username:            tt.username,
 				Description:         tt.description,
@@ -141,7 +143,7 @@ func TestHandlerCreateService(t *testing.T) {
 
 }
 
-func TestHandlerGetAllServicesForUser(t *testing.T) {
+func TestHandleListServices(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 	cleanupTestDB(t, testDB, "users", "services")
@@ -169,7 +171,7 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
 
-	var loginResp LoginResponse
+	var loginResp dto.LoginResponse
 	err := json.NewDecoder(rr.Body).Decode(&loginResp)
 	assert.NoError(t, err, "could not decode login response")
 	token := loginResp.Token
@@ -218,7 +220,7 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 	}
 
 	for _, service := range services {
-		serviceRequest := NewServiceRequest{
+		serviceRequest := dto.CreateServiceRequest{
 			Service:             service.service,
 			Username:            service.username,
 			Description:         service.description,
@@ -289,7 +291,7 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 				server.HTTPServer.Handler.ServeHTTP(rr, req)
 				assert.Equal(t, http.StatusOK, rr.Code, "login failed")
 
-				var loginResp LoginResponse
+				var loginResp dto.LoginResponse
 				err := json.NewDecoder(rr.Body).Decode(&loginResp)
 				assert.NoError(t, err, "could not decode login response")
 
@@ -313,7 +315,7 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 			}
 			bodyJSON, err := io.ReadAll(rr.Body)
 			assert.NoError(t, err, "error reading recorder body")
-			var servicesResponse []ServiceMetadataResponse
+			var servicesResponse []dto.ServiceMetadataResponse
 			err = json.Unmarshal(bodyJSON, &servicesResponse)
 			assert.NoError(t, err, "unexpected error")
 
@@ -328,7 +330,7 @@ func TestHandlerGetAllServicesForUser(t *testing.T) {
 
 }
 
-func TestHandlerDecryptById(t *testing.T) {
+func TestHandleDecryptServiceByID(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 	cleanupTestDB(t, testDB, "users", "services")
@@ -356,13 +358,13 @@ func TestHandlerDecryptById(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
 
-	var loginResp LoginResponse
+	var loginResp dto.LoginResponse
 	err := json.NewDecoder(rr.Body).Decode(&loginResp)
 	assert.NoError(t, err, "could not decode login response")
 	token := loginResp.Token
 
 	// create service
-	serviceRequest := NewServiceRequest{
+	serviceRequest := dto.CreateServiceRequest{
 		Service:             "test_service_1",
 		Username:            "test_user",
 		Description:         "description",
@@ -380,7 +382,7 @@ func TestHandlerDecryptById(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
 
-	var serviceData ServiceMetadataResponse
+	var serviceData dto.ServiceMetadataResponse
 	bodyReader, err := io.ReadAll(rr.Body)
 	assert.NoError(t, err, "unexpected error")
 
@@ -426,7 +428,7 @@ func TestHandlerDecryptById(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decryptRequest := CredentialsRequest{
+			decryptRequest := dto.DecryptServiceRequest{
 				Password: tt.userPass,
 			}
 			requestJSON, _ := json.Marshal(decryptRequest)
@@ -442,7 +444,7 @@ func TestHandlerDecryptById(t *testing.T) {
 			if tt.wantCode == 200 {
 				bodyJSON, err := io.ReadAll(rr.Body)
 				assert.NoError(t, err, "error reading recorder body")
-				var credentialsResponse ServiceCredentialsResponse
+				var credentialsResponse dto.ServiceCredentialsResponse
 				err = json.Unmarshal(bodyJSON, &credentialsResponse)
 				assert.NoError(t, err, "unexpected error")
 
@@ -455,7 +457,7 @@ func TestHandlerDecryptById(t *testing.T) {
 
 }
 
-func TestUpdateServicePassHandler(t *testing.T) {
+func TestHandleUpdateServicePassword(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 	cleanupTestDB(t, testDB, "users", "services")
@@ -483,13 +485,13 @@ func TestUpdateServicePassHandler(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
 
-	var loginResp LoginResponse
+	var loginResp dto.LoginResponse
 	err := json.NewDecoder(rr.Body).Decode(&loginResp)
 	assert.NoError(t, err, "could not decode login response")
 	token := loginResp.Token
 
 	// create service
-	serviceRequest := NewServiceRequest{
+	serviceRequest := dto.CreateServiceRequest{
 		Service:             "test_service_1",
 		Username:            "test_user",
 		Description:         "description",
@@ -507,7 +509,7 @@ func TestUpdateServicePassHandler(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
 
-	var serviceData ServiceMetadataResponse
+	var serviceData dto.ServiceMetadataResponse
 	bodyReader, err := io.ReadAll(rr.Body)
 	assert.NoError(t, err, "unexpected error")
 
@@ -519,14 +521,14 @@ func TestUpdateServicePassHandler(t *testing.T) {
 	tests := []struct {
 		name          string
 		token         string
-		updateRequest UpdateServiceRequest
+		updateRequest dto.UpdateServiceRequest
 		serviceID     uuid.UUID
 		wantCode      int
 	}{
 		{
 			name:  "successfully updates password of service",
 			token: token,
-			updateRequest: UpdateServiceRequest{
+			updateRequest: dto.UpdateServiceRequest{
 				Password:            "new_password",
 				EncryptionAlgorithm: "aes-gcm",
 				UserPassword:        testPass,
@@ -537,7 +539,7 @@ func TestUpdateServicePassHandler(t *testing.T) {
 		{
 			name:  "fails with invalid request object",
 			token: token,
-			updateRequest: UpdateServiceRequest{
+			updateRequest: dto.UpdateServiceRequest{
 				Password:     "new_pass",
 				UserPassword: testPass,
 			},
@@ -559,7 +561,7 @@ func TestUpdateServicePassHandler(t *testing.T) {
 				server.HTTPServer.Handler.ServeHTTP(rr, req)
 				assert.Equal(t, tt.wantCode, rr.Code)
 
-				var updatedServiceData ServiceMetadataResponse
+				var updatedServiceData dto.ServiceMetadataResponse
 				bodyReader, err := io.ReadAll(rr.Body)
 				assert.NoError(t, err, "unexpected error")
 

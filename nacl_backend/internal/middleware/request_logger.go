@@ -42,7 +42,6 @@ func RequestLogger(logger *slog.Logger) func(http.Handler) http.Handler {
 			next.ServeHTTP(rw, r)
 
 			duration := time.Since(start)
-			// level := determineLogLevel(rw.status)
 
 			logger.Log(r.Context(), slog.LevelInfo, "Served request",
 				slog.String("method", r.Method),

@@ -42,7 +42,7 @@ func run(ctx context.Context) int {
 	log.Debug("initializing db conn")
 	db, err := db.NewDatabase(ctx, cfg.DbString)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to connect to db: %v\n", err)
+		log.Error("failed to connect to db", "error", err)
 		return 1
 	}
 	log.Debug("db conn successfully initialized")
@@ -71,14 +71,14 @@ func run(ctx context.Context) int {
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer shutdownCancel()
 
-	s.Logger.Debug("Salt is shutting down")
+	log.Debug("Salt is shutting down")
 	if err := s.Shutdown(shutdownCtx); err != nil {
-		s.Logger.Error("failed to shutdown server", "error", err)
+		log.Error("failed to shutdown server", "error", err)
 		return 1
 	}
 	log.Debug("server shut down")
 	if serverErr != nil {
-		s.Logger.Error("server error", "error", serverErr)
+		log.Error("server error", "error", serverErr)
 		return 1
 	}
 	log.Debug("server shut down with no errors")

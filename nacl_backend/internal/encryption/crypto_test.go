@@ -24,8 +24,8 @@ func TestGenerateRandomBytes(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testResult := GenerateRandomBytes(tt.length)
-
+			testResult, err := GenerateRandomBytes(tt.length)
+			assert.NoError(t, err)
 			assert.Equal(t, tt.length, len(testResult))
 		})
 	}
@@ -42,25 +42,25 @@ func TestDeriveKey(t *testing.T) {
 		{
 			"returns correct length []byte with nil error",
 			"password",
-			GenerateRandomBytes(32),
+			mustGenerateRandomBytes(32, t),
 			false,
 			32,
 		}, {
 			"returns error from short salt",
 			"password",
-			GenerateRandomBytes(31),
+			mustGenerateRandomBytes(31, t),
 			true,
 			0,
 		}, {
 			"returns error from long salt",
 			"password",
-			GenerateRandomBytes(33),
+			mustGenerateRandomBytes(33, t),
 			true,
 			0,
 		}, {
 			"returns error from emtpy password",
 			"",
-			GenerateRandomBytes(32),
+			mustGenerateRandomBytes(32, t),
 			true,
 			32,
 		}, {
@@ -89,9 +89,18 @@ func TestDeriveKey(t *testing.T) {
 
 }
 
+func mustGenerateRandomBytes(n int, t *testing.T) []byte {
+	t.Helper()
+	b, err := GenerateRandomBytes(n)
+	if err != nil {
+		t.Fatalf("failed to generate random bytes: %v", err)
+	}
+	return b
+}
+
 func TestEncrypt(t *testing.T) {
 	testPassword := []byte("test_password")
-	key, _ := DeriveKey("password", GenerateRandomBytes(32))
+	key, _ := DeriveKey("password", mustGenerateRandomBytes(32, t))
 	ciphertextLength := func(password []byte) int {
 		return len(password) + 28
 	}
@@ -120,14 +129,14 @@ func TestEncrypt(t *testing.T) {
 		{
 			"returns error from short key",
 			testPassword,
-			GenerateRandomBytes(31),
+			mustGenerateRandomBytes(31, t),
 			true,
 			0,
 		},
 		{
 			"returns error from long key",
 			testPassword,
-			GenerateRandomBytes(33),
+			mustGenerateRandomBytes(33, t),
 			true,
 			0,
 		},
@@ -152,7 +161,7 @@ func TestEncrypt(t *testing.T) {
 
 func TestDecrypt(t *testing.T) {
 	testPassword := []byte("test_password")
-	key, _ := DeriveKey("password", GenerateRandomBytes(32))
+	key, _ := DeriveKey("password", mustGenerateRandomBytes(32, t))
 	encrypted, _ := Encrypt(testPassword, key)
 
 	tests := []struct {
@@ -172,13 +181,13 @@ func TestDecrypt(t *testing.T) {
 		{
 			"returns error from wrong key",
 			encrypted,
-			GenerateRandomBytes(32),
+			mustGenerateRandomBytes(32, t),
 			true,
 			nil,
 		},
 		{
 			"returns error from short ciphertext",
-			GenerateRandomBytes(2),
+			mustGenerateRandomBytes(2, t),
 			key,
 			true,
 			nil,

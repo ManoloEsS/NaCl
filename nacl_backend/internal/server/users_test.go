@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHandlerCreateUser(t *testing.T) {
+func TestHandleCreateUser(t *testing.T) {
 	tests := []struct {
 		name     string
 		username string
@@ -39,7 +39,7 @@ func TestHandlerCreateUser(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
-			server.handlerCreateUser(rr, req)
+			server.HandleCreateUser(rr, req)
 
 			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 
@@ -58,7 +58,7 @@ func TestHandlerCreateUser(t *testing.T) {
 	}
 }
 
-func TestHandlerCreateUser_Duplicate(t *testing.T) {
+func TestHandleCreateUser_Duplicate(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 
@@ -70,7 +70,7 @@ func TestHandlerCreateUser_Duplicate(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
-	server.handlerCreateUser(rr, req)
+	server.HandleCreateUser(rr, req)
 	assert.Equal(t, 201, rr.Code)
 
 	// Try to create duplicate
@@ -78,13 +78,13 @@ func TestHandlerCreateUser_Duplicate(t *testing.T) {
 	req2.Header.Set("Content-Type", "application/json")
 	rr2 := httptest.NewRecorder()
 
-	server.handlerCreateUser(rr2, req2)
+	server.HandleCreateUser(rr2, req2)
 
 	// Should fail with 500 (unique constraint violation)
 	assert.Equal(t, 500, rr2.Code)
 }
 
-func TestHandlerCreateUser_InvalidJSON(t *testing.T) {
+func TestHandleCreateUser_InvalidJSON(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 
@@ -94,7 +94,7 @@ func TestHandlerCreateUser_InvalidJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
-	server.handlerCreateUser(rr, req)
+	server.HandleCreateUser(rr, req)
 
 	assert.Equal(t, 400, rr.Code)
 }

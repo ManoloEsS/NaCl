@@ -1,19 +1,19 @@
 package server
 
 import (
-	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 	userID, ok := auth.UserIDFromContext(r.Context())
 
@@ -30,7 +30,7 @@ func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decryptReq, err := decodeAndValidate[*CredentialsRequest](r.Body)
+	decryptReq, err := dto.DecodeAndValidate[*dto.DecryptServiceRequest](r.Body)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not process payload: %w", err),
@@ -50,7 +50,7 @@ func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("invalid service id: %w", err),
-			"userID", userID,
+			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
@@ -62,60 +62,48 @@ func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := s.Db.Queries()
-	userData, err := query.GetUserById(r.Context(), userID)
+	result, err := s.Svc.DecryptServiceByID(r.Context(), userID, serviceID, decryptReq.Password)
 	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not get user data: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusInternalServerError,
-			"could not retrieve credentials",
-			err,
-		)
-		return
-	}
-
-	match, err := auth.CheckPasswordHash(decryptReq.Password, userData.PasswordHash)
-	if !match || err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("password does not match user password: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusUnauthorized,
-			"could not retrieve credentials",
-			err,
-		)
-		return
-	}
-
-	service, err := query.GetServiceById(r.Context(), db.GetServiceByIdParams{ID: serviceID, UserID: userID})
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not find service: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusNotFound,
-			"could not retrieve credentials",
-			err,
-		)
-		return
-	}
-
-	decryptedCredentials, err := newServiceCredentialResponse(decryptReq.Password, service, &userData)
-	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			s.RespondWithError(
+				w, http.StatusUnauthorized,
+				"could not retrieve credentials",
+				apperr.WithAttrs(
+					fmt.Errorf("invalid credentials: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
+		if errors.Is(err, service.ErrUserNotFound) {
+			s.RespondWithError(
+				w, http.StatusUnauthorized,
+				"not authorized",
+				apperr.WithAttrs(
+					fmt.Errorf("user not found: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
+		if errors.Is(err, service.ErrServiceNotFound) {
+			s.RespondWithError(
+				w,
+				http.StatusNotFound,
+				"could not retrieve credentials",
+				apperr.WithAttrs(
+					fmt.Errorf("service not found: %w", err),
+					"userID", userID.String(),
+					"endpoint", endpointReqPath,
+				),
+			)
+			return
+		}
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not decrypt credentials: %w", err),
-			"user", userData.Username,
+			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
@@ -127,57 +115,5 @@ func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.RespondWithJSON(w, http.StatusOK, decryptedCredentials)
-}
-
-func newServiceCredentialResponse(
-	password string,
-	service db.Service,
-	user *db.User) (ServiceCredentialsResponse, error) {
-	decodedSalt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)
-	if err != nil {
-		return ServiceCredentialsResponse{}, fmt.Errorf("could not decode master key salt: %w", err)
-	}
-
-	derivedKey, err := encryption.DeriveKey(password, decodedSalt)
-	if err != nil {
-		return ServiceCredentialsResponse{}, fmt.Errorf("could not derive key: %w", err)
-	}
-
-	decodedMasterKey, err := base64.StdEncoding.DecodeString(user.EncryptedMasterKey)
-	if err != nil {
-		return ServiceCredentialsResponse{}, fmt.Errorf("could not decode encrypted master key: %w", err)
-	}
-
-	masterKey, err := encryption.Decrypt(decodedMasterKey, derivedKey)
-	if err != nil {
-		return ServiceCredentialsResponse{}, fmt.Errorf("could not decrypt master key: %w", err)
-	}
-
-	decryptedUsername, err := encryption.Decrypt(service.EncryptedServiceUsername, masterKey)
-	if err != nil {
-		return ServiceCredentialsResponse{}, fmt.Errorf("could not decrypt username: %w", err)
-	}
-
-	decryptedPassword, err := encryption.Decrypt(service.EncryptedPassword, masterKey)
-	if err != nil {
-		return ServiceCredentialsResponse{}, fmt.Errorf("could not decrypt password: %w", err)
-	}
-
-	var description string
-	if service.Description.Valid {
-		description = service.Description.String
-	}
-
-	decryptedService := ServiceCredentialsResponse{
-		Service:             service.Service,
-		ServiceUsername:     string(decryptedUsername),
-		Password:            string(decryptedPassword),
-		Description:         description,
-		EncryptionAlgorithm: service.EncryptionAlgorithm,
-		CreatedAt:           service.CreatedAt.Time,
-		UpdatedAt:           service.UpdatedAt.Time,
-	}
-
-	return decryptedService, nil
+	s.RespondWithJSON(w, http.StatusOK, result)
 }

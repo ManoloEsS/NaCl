@@ -94,7 +94,7 @@ run: build
 # Test: run tests with test database
 test: db-test-clean
 	sleep 1
-	go test ./... -v
+	go test ./... -v -json | tparse -all -smallscreen
 
 # Clean: remove build artifacts
 clean:
