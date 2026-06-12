@@ -29,7 +29,7 @@ type ServiceCredentialsResponse struct {
 	Service             string    `json:"service"`
 	ServiceUsername     string    `json:"service_username"`
 	Description         string    `json:"description"`
-	Password            string    `json:"encrypted_password"`
+	Password            string    `json:"password"`
 	EncryptionAlgorithm string    `json:"encryption_algorithm"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`

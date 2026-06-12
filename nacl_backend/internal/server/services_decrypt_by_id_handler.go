@@ -46,18 +46,34 @@ func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	serviceID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		err = apperr.WithAttrs(
+			fmt.Errorf("invalid service id: %w", err),
+			"userID", userID,
+			"endpoint", endpointReqPath,
+		)
+		s.RespondWithError(
+			w,
+			http.StatusBadRequest,
+			"could not retrieve credentials",
+			err,
+		)
+		return
+	}
+
 	query := s.Db.Queries()
 	userData, err := query.GetUserById(r.Context(), userID)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not get user data: %w", err),
-			"user", userData.Username,
+			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
 			w,
 			http.StatusInternalServerError,
-			"could not create service",
+			"could not retrieve credentials",
 			err,
 		)
 		return
@@ -78,47 +94,17 @@ func (s *Server) handlerDecryptByID(w http.ResponseWriter, r *http.Request) {
 		)
 		return
 	}
-	serviceID, err := uuid.Parse(chi.URLParam(r, "id"))
-	if err != nil {
-		err = apperr.WithAttrs(
-			fmt.Errorf("invalid service id: %w", err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusBadRequest,
-			"could not retrieve credentials",
-			err,
-		)
-		return
-	}
 
-	service, err := query.GetServiceById(r.Context(), serviceID)
+	service, err := query.GetServiceById(r.Context(), db.GetServiceByIdParams{ID: serviceID, UserID: userID})
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not find service: %w", err),
-			"user", userData.Username,
+			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
 			w,
 			http.StatusNotFound,
-			"could not retrieve credentials",
-			err,
-		)
-		return
-	}
-
-	if userID != service.UserID {
-		err = apperr.WithAttrs(
-			fmt.Errorf("user with id %s does not own the service with id %s: %w", userID.String(), service.ID.String(), err),
-			"user", userData.Username,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w,
-			http.StatusUnauthorized,
 			"could not retrieve credentials",
 			err,
 		)
@@ -178,11 +164,16 @@ func newServiceCredentialResponse(
 		return ServiceCredentialsResponse{}, fmt.Errorf("could not decrypt password: %w", err)
 	}
 
+	var description string
+	if service.Description.Valid {
+		description = service.Description.String
+	}
+
 	decryptedService := ServiceCredentialsResponse{
 		Service:             service.Service,
 		ServiceUsername:     string(decryptedUsername),
 		Password:            string(decryptedPassword),
-		Description:         service.Description.String,
+		Description:         description,
 		EncryptionAlgorithm: service.EncryptionAlgorithm,
 		CreatedAt:           service.CreatedAt.Time,
 		UpdatedAt:           service.UpdatedAt.Time,

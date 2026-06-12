@@ -116,11 +116,16 @@ func (q *Queries) GetAllServicesForUserId(ctx context.Context, userID uuid.UUID)
 const getServiceById = `-- name: GetServiceById :one
 SELECT id, service, encrypted_service_username, description, encrypted_password, encryption_algorithm, user_id, created_at, updated_at
 FROM services
-WHERE id = $1
+WHERE id = $1 and user_id = $2
 `
 
-func (q *Queries) GetServiceById(ctx context.Context, id uuid.UUID) (Service, error) {
-	row := q.db.QueryRow(ctx, getServiceById, id)
+type GetServiceByIdParams struct {
+	ID     uuid.UUID `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) GetServiceById(ctx context.Context, arg GetServiceByIdParams) (Service, error) {
+	row := q.db.QueryRow(ctx, getServiceById, arg.ID, arg.UserID)
 	var i Service
 	err := row.Scan(
 		&i.ID,
@@ -136,33 +141,42 @@ func (q *Queries) GetServiceById(ctx context.Context, id uuid.UUID) (Service, er
 	return i, err
 }
 
-const updateService = `-- name: UpdateService :exec
+const updateService = `-- name: UpdateService :one
 UPDATE services
-SET encrypted_service_username = $1,
-    description = $2,
-    encrypted_password = $3,
-    encryption_algorithm = $4,
+SET encrypted_password = $1,
+    encryption_algorithm = $2,
     updated_at = NOW()
-WHERE id = $5 AND user_id = $6
+WHERE id = $3 AND user_id = $4
+RETURNING id, service, description, encryption_algorithm
 `
 
 type UpdateServiceParams struct {
-	EncryptedServiceUsername []byte      `json:"encrypted_service_username"`
-	Description              pgtype.Text `json:"description"`
-	EncryptedPassword        []byte      `json:"encrypted_password"`
-	EncryptionAlgorithm      string      `json:"encryption_algorithm"`
-	ID                       uuid.UUID   `json:"id"`
-	UserID                   uuid.UUID   `json:"user_id"`
+	EncryptedPassword   []byte    `json:"encrypted_password"`
+	EncryptionAlgorithm string    `json:"encryption_algorithm"`
+	ID                  uuid.UUID `json:"id"`
+	UserID              uuid.UUID `json:"user_id"`
 }
 
-func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) error {
-	_, err := q.db.Exec(ctx, updateService,
-		arg.EncryptedServiceUsername,
-		arg.Description,
+type UpdateServiceRow struct {
+	ID                  uuid.UUID   `json:"id"`
+	Service             string      `json:"service"`
+	Description         pgtype.Text `json:"description"`
+	EncryptionAlgorithm string      `json:"encryption_algorithm"`
+}
+
+func (q *Queries) UpdateService(ctx context.Context, arg UpdateServiceParams) (UpdateServiceRow, error) {
+	row := q.db.QueryRow(ctx, updateService,
 		arg.EncryptedPassword,
 		arg.EncryptionAlgorithm,
 		arg.ID,
 		arg.UserID,
 	)
-	return err
+	var i UpdateServiceRow
+	err := row.Scan(
+		&i.ID,
+		&i.Service,
+		&i.Description,
+		&i.EncryptionAlgorithm,
+	)
+	return i, err
 }
