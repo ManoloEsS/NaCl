@@ -19,11 +19,11 @@ type Querier interface {
 	GetAllServicesForUserId(ctx context.Context, userID uuid.UUID) ([]GetAllServicesForUserIdRow, error)
 	GetOperationsForService(ctx context.Context, arg GetOperationsForServiceParams) ([]Operation, error)
 	GetOperationsForUserId(ctx context.Context, userID uuid.UUID) ([]Operation, error)
-	GetServiceById(ctx context.Context, id uuid.UUID) (Service, error)
+	GetServiceById(ctx context.Context, arg GetServiceByIdParams) (Service, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	UpdateOperationDesc(ctx context.Context, arg UpdateOperationDescParams) error
-	UpdateService(ctx context.Context, arg UpdateServiceParams) error
+	UpdateService(ctx context.Context, arg UpdateServiceParams) (UpdateServiceRow, error)
 	UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error
 	UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error)
 	UpdateUserSalt(ctx context.Context, arg UpdateUserSaltParams) error
