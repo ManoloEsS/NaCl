@@ -32,12 +32,15 @@ func decodeAndValidate[T Validator](body io.Reader) (T, error) {
 type Validator interface {
 	Validate() error
 }
+
+// struct used for creating user and logging in
 type UserRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-type ServiceRequest struct {
+// struct used for creating new service
+type NewServiceRequest struct {
 	Service             string `json:"service"`
 	Username            string `json:"username"`
 	Description         string `json:"description,omitempty"`
@@ -46,8 +49,17 @@ type ServiceRequest struct {
 	UserPassword        string `json:"user_password"`
 }
 
+// struct used for requesting decrypted credentials
+// (user id gathered from context and serviceid from url params)
 type CredentialsRequest struct {
 	Password string `json:"password"`
+}
+
+// struct used for requesting update of a service password
+type UpdateServiceRequest struct {
+	Password            string `json:"password"`
+	EncryptionAlgorithm string `json:"encryption_algorithm"`
+	UserPassword        string `json:"user_password"`
 }
 
 func (ur *UserRequest) Validate() error {
@@ -61,7 +73,7 @@ func (ur *UserRequest) Validate() error {
 	return nil
 }
 
-func (sr *ServiceRequest) Validate() error {
+func (sr *NewServiceRequest) Validate() error {
 	if strings.TrimSpace(sr.Service) == "" {
 		return fmt.Errorf("service name is required")
 	}
@@ -87,6 +99,22 @@ func (sr *ServiceRequest) Validate() error {
 
 func (cr *CredentialsRequest) Validate() error {
 	if strings.TrimSpace(cr.Password) == "" {
+		return fmt.Errorf("user password is required")
+	}
+
+	return nil
+}
+
+func (uds *UpdateServiceRequest) Validate() error {
+	if strings.TrimSpace(uds.Password) == "" {
+		return fmt.Errorf("password is required")
+	}
+
+	if _, err := encryption.ValidAlgorithm(strings.TrimSpace(uds.EncryptionAlgorithm)); err != nil {
+		return fmt.Errorf("invalid encryption algorithm")
+	}
+
+	if strings.TrimSpace(uds.UserPassword) == "" {
 		return fmt.Errorf("user password is required")
 	}
 
