@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :one
+const createUser = `-- name: CreateUser :exec
 INSERT INTO users (username, password_hash, master_key_salt, encrypted_master_key)
 VALUES (
     $1,
@@ -19,7 +19,6 @@ VALUES (
     $3,
     $4
     )
-    RETURNING id, username, password_hash, master_key_salt, encrypted_master_key, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -29,24 +28,14 @@ type CreateUserParams struct {
 	EncryptedMasterKey string `json:"encrypted_master_key"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
+	_, err := q.db.Exec(ctx, createUser,
 		arg.Username,
 		arg.PasswordHash,
 		arg.MasterKeySalt,
 		arg.EncryptedMasterKey,
 	)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.PasswordHash,
-		&i.MasterKeySalt,
-		&i.EncryptedMasterKey,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+	return err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
