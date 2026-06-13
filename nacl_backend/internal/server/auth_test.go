@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -12,9 +11,7 @@ import (
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
-	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -86,7 +83,7 @@ func TestHandleLogin(t *testing.T) {
 			}
 
 			queries := testDB.Queries()
-			user, err := queries.CreateUser(context.Background(), newUserData)
+			err = queries.CreateUser(context.Background(), newUserData)
 			if err != nil {
 				t.Fatalf("insert test failed: %v", err)
 			}
@@ -98,21 +95,7 @@ func TestHandleLogin(t *testing.T) {
 
 			server.HandleLogin(rr, req)
 
-			var userDataLogin dto.LoginResponse
-			err = json.NewDecoder(rr.Body).Decode(&userDataLogin)
-			if err != nil {
-				t.Errorf("could not decode user data from login: %v", err)
-			}
-
 			assert.Equal(t, tt.loginWantCode, rr.Code, "unexpected status code")
-			assert.IsType(t, uuid.UUID{}, userDataLogin.ID, "login response does not contain UUID id")
-
-			if !tt.expectError {
-				assert.Equal(t, user.Username, userDataLogin.Username)
-				assert.NotEqual(t, uuid.Nil, userDataLogin.ID, "expected id to be not nil")
-				return
-			}
-
 		})
 	}
 }

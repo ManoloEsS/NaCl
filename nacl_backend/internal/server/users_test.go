@@ -44,9 +44,6 @@ func TestHandleCreateUser(t *testing.T) {
 			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 
 			if tt.wantCode == 201 {
-				assert.Contains(t, rr.Body.String(), "username")
-				assert.Contains(t, rr.Body.String(), tt.username)
-
 				ctx := context.Background()
 				user, err := testDB.Queries().GetUserByUsername(ctx, tt.username)
 				assert.NoError(t, err)

@@ -11,43 +11,43 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
 )
 
-func (svc *Service) CreateUser(ctx context.Context, username, password string) (dto.UserResponse, error) {
+func (svc *Service) CreateUser(ctx context.Context, username, password string) error {
 	salt, err := encryption.GenerateRandomBytes(32)
 	if err != nil {
-		return dto.UserResponse{}, err
+		return err
 	}
 
 	key, err := encryption.GenerateRandomBytes(32)
 	if err != nil {
-		return dto.UserResponse{}, err
+		return err
 	}
 
 	derivedKey, err := encryption.DeriveKey(password, salt)
 	if err != nil {
-		return dto.UserResponse{}, err
+		return err
 	}
 
 	encryptedMasterKey, err := encryption.Encrypt(key, derivedKey)
 	if err != nil {
-		return dto.UserResponse{}, err
+		return err
 	}
 
 	hashedPassword, err := auth.HashPassword(password)
 	if err != nil {
-		return dto.UserResponse{}, err
+		return err
 	}
 
-	created, err := svc.Db.Queries().CreateUser(ctx, db.CreateUserParams{
+	err = svc.Db.Queries().CreateUser(ctx, db.CreateUserParams{
 		Username:           username,
 		PasswordHash:       hashedPassword,
 		MasterKeySalt:      base64.StdEncoding.EncodeToString(salt),
 		EncryptedMasterKey: base64.StdEncoding.EncodeToString(encryptedMasterKey),
 	})
 	if err != nil {
-		return dto.UserResponse{}, err
+		return err
 	}
 
-	return dto.UserResponse{ID: created.ID, Username: created.Username}, nil
+	return nil
 }
 
 func (svc *Service) Login(ctx context.Context, username, password string) (dto.LoginResponse, error) {
