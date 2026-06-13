@@ -20,7 +20,7 @@ func (s *Server) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.Svc.CreateUser(r.Context(), userData.Username, userData.Password)
+	err = s.Svc.CreateUser(r.Context(), userData.Username, userData.Password)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not create user: %w", err),
@@ -31,5 +31,5 @@ func (s *Server) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	s.RespondWithJSON(w, http.StatusCreated, result)
+	s.RespondWithJSON(w, http.StatusCreated, nil)
 }
