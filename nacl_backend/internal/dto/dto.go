@@ -36,30 +36,30 @@ func DecodeAndValidate[T Validator](body io.Reader) (T, error) {
 // ----------------------------------------------------------------------------------
 
 type CreateUserRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username     string `json:"username"`
+	UserPassword string `json:"user_password"`
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username     string `json:"username"`
+	UserPassword string `json:"user_password"`
 }
 
 type CreateServiceRequest struct {
 	Service             string `json:"service"`
-	Username            string `json:"username"`
+	ServiceUsername     string `json:"service_username"`
 	Description         string `json:"description,omitempty"`
-	Password            string `json:"password"`
+	ServicePassword     string `json:"service_password"`
 	EncryptionAlgorithm string `json:"encryption_algorithm"`
 	UserPassword        string `json:"user_password"`
 }
 
 type DecryptServiceRequest struct {
-	Password string `json:"password"`
+	UserPassword string `json:"user_password"`
 }
 
 type UpdateServiceRequest struct {
-	Password            string `json:"password"`
+	ServicePassword     string `json:"service_password"`
 	EncryptionAlgorithm string `json:"encryption_algorithm"`
 	UserPassword        string `json:"user_password"`
 }
@@ -69,7 +69,7 @@ func (r *CreateUserRequest) Validate() error {
 		return fmt.Errorf("username is required")
 	}
 
-	if r.Password == "" {
+	if r.UserPassword == "" {
 		return fmt.Errorf("password is required")
 	}
 	return nil
@@ -80,7 +80,7 @@ func (r *LoginRequest) Validate() error {
 		return fmt.Errorf("username is required")
 	}
 
-	if r.Password == "" {
+	if r.UserPassword == "" {
 		return fmt.Errorf("password is required")
 	}
 	return nil
@@ -91,11 +91,11 @@ func (r *CreateServiceRequest) Validate() error {
 		return fmt.Errorf("service name is required")
 	}
 
-	if strings.TrimSpace(r.Username) == "" {
+	if strings.TrimSpace(r.ServiceUsername) == "" {
 		return fmt.Errorf("username is required")
 	}
 
-	if strings.TrimSpace(r.Password) == "" {
+	if r.ServicePassword == "" {
 		return fmt.Errorf("password is required")
 	}
 
@@ -103,7 +103,7 @@ func (r *CreateServiceRequest) Validate() error {
 		return fmt.Errorf("invalid encryption algorithm")
 	}
 
-	if strings.TrimSpace(r.UserPassword) == "" {
+	if r.UserPassword == "" {
 		return fmt.Errorf("user password is required")
 	}
 
@@ -111,7 +111,7 @@ func (r *CreateServiceRequest) Validate() error {
 }
 
 func (r *DecryptServiceRequest) Validate() error {
-	if strings.TrimSpace(r.Password) == "" {
+	if strings.TrimSpace(r.UserPassword) == "" {
 		return fmt.Errorf("user password is required")
 	}
 
@@ -119,7 +119,7 @@ func (r *DecryptServiceRequest) Validate() error {
 }
 
 func (r *UpdateServiceRequest) Validate() error {
-	if strings.TrimSpace(r.Password) == "" {
+	if r.ServicePassword == "" {
 		return fmt.Errorf("password is required")
 	}
 
@@ -127,7 +127,7 @@ func (r *UpdateServiceRequest) Validate() error {
 		return fmt.Errorf("invalid encryption algorithm")
 	}
 
-	if strings.TrimSpace(r.UserPassword) == "" {
+	if r.UserPassword == "" {
 		return fmt.Errorf("user password is required")
 	}
 
@@ -161,7 +161,7 @@ type ServiceCredentialsResponse struct {
 	Service             string    `json:"service"`
 	ServiceUsername     string    `json:"service_username"`
 	Description         string    `json:"description"`
-	Password            string    `json:"password"`
+	ServicePassword     string    `json:"service_password"`
 	EncryptionAlgorithm string    `json:"encryption_algorithm"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`

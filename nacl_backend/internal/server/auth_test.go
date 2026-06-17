@@ -88,7 +88,7 @@ func TestHandleLogin(t *testing.T) {
 				t.Fatalf("insert test failed: %v", err)
 			}
 
-			body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, tt.usernameLogin, tt.passwordLogin)
+			body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, tt.usernameLogin, tt.passwordLogin)
 			req := httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()

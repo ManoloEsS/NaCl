@@ -22,7 +22,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.Svc.Login(r.Context(), loginData.Username, loginData.Password)
+	result, err := s.Svc.Login(r.Context(), loginData.Username, loginData.UserPassword)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			s.RespondWithError(w, http.StatusUnauthorized, "could not log in", apperr.WithAttrs(
