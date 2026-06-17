@@ -28,6 +28,13 @@ export const CreateServiceSchema = z
   })
   .strict()
 
+export const NewServiceFormSchema = CreateServiceSchema.extend({
+  confirm_service_password: z.string().min(1, 'Please confirm password')
+}).refine((data) => data.service_password === data.confirm_service_password, {
+  message: 'Passwords do not match',
+  path: ['confirm_service_password']
+})
+
 export const DecryptServiceSchema = z.object({
   user_password
 })
@@ -43,3 +50,4 @@ export type LoginRequest = CreateUserRequest
 export type CreateServiceRequest = z.infer<typeof CreateServiceSchema>
 export type DecryptServiceRequest = z.infer<typeof DecryptServiceSchema>
 export type UpdateServiceRequest = z.infer<typeof UpdateServiceSchema>
+export type NewServiceFormRequest = z.infer<typeof NewServiceFormSchema>
