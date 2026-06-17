@@ -1,57 +1,41 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import './App.css'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import ErrorBoundary from './componets/ErrorBoundary'
+import { LoginPage } from './pages/LoginPage'
+import { ToastProvider } from './context/ToastContext'
+import { Dashboard } from './pages/Dashboard'
+import { ProtectedRoute } from './componets/ProtectedRoute'
+import { RegistrationPage } from './pages/RegistrationPage'
 
-function App() {
-  const [newUsername, setNewUsername] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  // const [loading, setLoading] = useState(true)
-
-  useEffect(() => {}, [])
-
-  const handleRegisterUser = async (e: any) => {
-    e.preventDefault()
-    if (!newUsername.trim()) {
-      return
-    }
-
-    try {
-      await axios.post('/api/users', {
-        username: newUsername,
-        password: newPassword,
-      })
-      setNewUsername('')
-      setNewPassword('')
-    } catch (err) {
-      console.error('Failed to add item:', err)
-    }
-  }
-
-  return (
-    <div className="container">
-      <h1>NaCl</h1>
-
-      <form onSubmit={handleRegisterUser} className="add-form">
-        <input
-          type="text"
-          placeholder="Username"
-          value={newUsername}
-          onChange={(e) => setNewUsername(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Password"
-          value={newPassword}
-          onChange={(e) =>
-            setNewPassword(() => {
-              return '*'.repeat(e.target.value.length)
-            })
-          }
-        />
-        <button type="submit">Register</button>
-      </form>
-    </div>
-  )
+function RootRedirect() {
+  const { user } = useAuth()
+  if (!user) return <Navigate to='/login' replace />
+  return <Navigate to='/dash' replace />
 }
 
-export default App
+export const App = () => {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <ToastProvider>
+          <ErrorBoundary>
+            <Routes>
+              <Route path='/login' element={<LoginPage />} />
+              <Route path='/register' element={<RegistrationPage />} />
+              <Route path='/' element={<RootRedirect />} />
+              <Route
+                path='/dash'
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path='*' element={<Navigate to='/' replace />} />
+            </Routes>
+          </ErrorBoundary>
+        </ToastProvider>
+      </BrowserRouter>
+    </AuthProvider>
+  )
+}
