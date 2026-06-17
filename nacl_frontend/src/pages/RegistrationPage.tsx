@@ -22,14 +22,10 @@ export const RegistrationPage = () => {
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      // TODO: handle userData differently to not rerender login page
-      console.log('registering user')
       await registerUser(data.username, data.user_password)
-      console.log('user registered')
       showToast('Registration successful! Redirecting to login...', 'success')
       setTimeout(() => navigate('/login', { replace: true }), 1500)
-    } catch (e) {
-      console.log(e)
+    } catch {
       setError('root', { message: 'Could not register user' })
     }
   }
