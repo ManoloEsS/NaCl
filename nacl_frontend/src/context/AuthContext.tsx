@@ -31,22 +31,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   )
   const [loading, setLoading] = useState(false)
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem('token')
-      const user = localStorage.getItem('user')
-      if (token && !user) {
-        try {
-          const res = await client.get('/me')
-          setUser(res.data)
-          localStorage.setItem('user', JSON.stringify(res.data))
-        } catch {
-          logout()
-        }
-      }
-    }
-    fetchUser()
-  }, [])
+  const logout = () => {
+    setToken(null)
+    setUser(null)
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+  }
 
   const login = async (
     username: string,
@@ -66,12 +56,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const logout = () => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-  }
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem('token')
+      const user = localStorage.getItem('user')
+      if (token && !user) {
+        try {
+          const res = await client.get('/me')
+          setUser(res.data)
+          localStorage.setItem('user', JSON.stringify(res.data))
+        } catch {
+          logout()
+        }
+      }
+    }
+    fetchUser()
+  }, [])
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
