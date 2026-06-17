@@ -541,8 +541,8 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 			name:  "fails with invalid request object",
 			token: token,
 			updateRequest: dto.UpdateServiceRequest{
-				ServicePassword:     "new_pass",
-				UserPassword: testPass,
+				ServicePassword: "new_pass",
+				UserPassword:    testPass,
 			},
 			serviceID: serviceID,
 			wantCode:  400,
