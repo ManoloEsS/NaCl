@@ -34,7 +34,7 @@ func TestHandleCreateUser(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cleanupTestDB(t, testDB, "users")
 
-			body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, tt.username, tt.password)
+			body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, tt.username, tt.password)
 			req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
@@ -62,7 +62,7 @@ func TestHandleCreateUser_Duplicate(t *testing.T) {
 	server := newTestServer(t, testDB)
 
 	// Create first user
-	body := `{"username": "duplicate", "password": "password123"}`
+	body := `{"username": "duplicate", "user_password": "password123"}`
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()

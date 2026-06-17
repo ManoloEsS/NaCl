@@ -62,7 +62,7 @@ func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	result, err := s.Svc.DecryptServiceByID(r.Context(), userID, serviceID, decryptReq.Password)
+	result, err := s.Svc.DecryptServiceByID(r.Context(), userID, serviceID, decryptReq.UserPassword)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			s.RespondWithError(

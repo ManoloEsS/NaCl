@@ -53,12 +53,12 @@ func (svc *Service) CreateService(ctx context.Context, userID uuid.UUID, req *dt
 		return dto.ServiceMetadataResponse{}, err
 	}
 
-	encryptedUsername, err := encryption.Encrypt([]byte(req.Username), masterKey)
+	encryptedUsername, err := encryption.Encrypt([]byte(req.ServiceUsername), masterKey)
 	if err != nil {
 		return dto.ServiceMetadataResponse{}, fmt.Errorf("could not encrypt username: %w", err)
 	}
 
-	encryptedPassword, err := encryption.Encrypt([]byte(req.Password), masterKey)
+	encryptedPassword, err := encryption.Encrypt([]byte(req.ServicePassword), masterKey)
 	if err != nil {
 		return dto.ServiceMetadataResponse{}, fmt.Errorf("could not encrypt password: %w", err)
 	}
@@ -151,7 +151,7 @@ func (svc *Service) DecryptServiceByID(ctx context.Context, userID, serviceID uu
 	return dto.ServiceCredentialsResponse{
 		Service:             service.Service,
 		ServiceUsername:     string(decryptedUsername),
-		Password:            string(decryptedPassword),
+		ServicePassword:     string(decryptedPassword),
 		Description:         description,
 		EncryptionAlgorithm: service.EncryptionAlgorithm,
 		CreatedAt:           service.CreatedAt.Time,
@@ -175,7 +175,7 @@ func (svc *Service) UpdateServicePassword(ctx context.Context, userID, serviceID
 		return dto.ServiceMetadataResponse{}, err
 	}
 
-	encryptedNewPass, err := encryption.Encrypt([]byte(req.Password), masterKey)
+	encryptedNewPass, err := encryption.Encrypt([]byte(req.ServicePassword), masterKey)
 	if err != nil {
 		return dto.ServiceMetadataResponse{}, fmt.Errorf("could not encrypt new password: %w", err)
 	}

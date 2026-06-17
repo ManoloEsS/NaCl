@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
 )
@@ -25,7 +26,7 @@ func TestHandleCreateService(t *testing.T) {
 	testUser := "test_services_user"
 	testPass := "test_services_pass"
 
-	body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
@@ -33,7 +34,7 @@ func TestHandleCreateService(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
 
-	body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr = httptest.NewRecorder()
@@ -49,7 +50,7 @@ func TestHandleCreateService(t *testing.T) {
 	tests := []struct {
 		name                string
 		service             string
-		username            string
+		serviceUsername     string
 		description         string
 		password            string
 		encryptionAlgorithm string
@@ -120,9 +121,9 @@ func TestHandleCreateService(t *testing.T) {
 
 			serviceRequest := dto.CreateServiceRequest{
 				Service:             tt.service,
-				Username:            tt.username,
+				ServiceUsername:     tt.serviceUsername,
 				Description:         tt.description,
-				Password:            tt.password,
+				ServicePassword:     tt.password,
 				EncryptionAlgorithm: tt.encryptionAlgorithm,
 				UserPassword:        tt.userPassword,
 			}
@@ -154,7 +155,7 @@ func TestHandleListServices(t *testing.T) {
 	testPass := "test_services_pass"
 
 	// create user
-	body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
@@ -163,7 +164,7 @@ func TestHandleListServices(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
 
 	// login as user
-	body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr = httptest.NewRecorder()
@@ -177,12 +178,12 @@ func TestHandleListServices(t *testing.T) {
 	token := loginResp.Token
 
 	services := []struct {
-		service      string
-		username     string
-		description  string
-		password     string
-		algo         string
-		userPassword string
+		service         string
+		serviceUsername string
+		description     string
+		password        string
+		algo            string
+		userPassword    string
 	}{
 
 		{
@@ -222,9 +223,9 @@ func TestHandleListServices(t *testing.T) {
 	for _, service := range services {
 		serviceRequest := dto.CreateServiceRequest{
 			Service:             service.service,
-			Username:            service.username,
+			ServiceUsername:     service.serviceUsername,
 			Description:         service.description,
-			Password:            service.password,
+			ServicePassword:     service.password,
 			EncryptionAlgorithm: service.algo,
 			UserPassword:        service.userPassword,
 		}
@@ -274,7 +275,7 @@ func TestHandleListServices(t *testing.T) {
 			wantCount: 0,
 			setupFunc: func(token string) string {
 				// create user
-				body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, "test_2", "test_pass2")
+				body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, "test_2", "test_pass2")
 				req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 				req.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
@@ -283,7 +284,7 @@ func TestHandleListServices(t *testing.T) {
 				assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
 
 				// login as user
-				body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, "test_2", "test_pass2")
+				body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, "test_2", "test_pass2")
 				req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
 				req.Header.Set("Content-Type", "application/json")
 				rr = httptest.NewRecorder()
@@ -308,16 +309,16 @@ func TestHandleListServices(t *testing.T) {
 			rr := httptest.NewRecorder()
 
 			server.HTTPServer.Handler.ServeHTTP(rr, req)
-			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
+			require.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 
 			if tt.wantCode != 200 {
 				return
 			}
 			bodyJSON, err := io.ReadAll(rr.Body)
-			assert.NoError(t, err, "error reading recorder body")
+			require.NoError(t, err, "error reading recorder body")
 			var servicesResponse []dto.ServiceMetadataResponse
 			err = json.Unmarshal(bodyJSON, &servicesResponse)
-			assert.NoError(t, err, "unexpected error")
+			require.NoError(t, err, "unexpected error")
 
 			assert.Equal(t, tt.wantCount, len(servicesResponse))
 			if tt.wantCount > 0 {
@@ -341,7 +342,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	testPass := "test_services_pass"
 
 	// create user
-	body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
@@ -350,7 +351,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
 
 	// login as user
-	body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr = httptest.NewRecorder()
@@ -366,9 +367,9 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	// create service
 	serviceRequest := dto.CreateServiceRequest{
 		Service:             "test_service_1",
-		Username:            "test_user",
+		ServiceUsername:     "test_user",
 		Description:         "description",
-		Password:            "service_pass_1",
+		ServicePassword:     "service_pass_1",
 		EncryptionAlgorithm: "aes-gcm",
 		UserPassword:        testPass,
 	}
@@ -429,7 +430,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			decryptRequest := dto.DecryptServiceRequest{
-				Password: tt.userPass,
+				UserPassword: tt.userPass,
 			}
 			requestJSON, _ := json.Marshal(decryptRequest)
 			urlPath := fmt.Sprintf("/api/services/%s/credentials", tt.serviceID.String())
@@ -448,8 +449,8 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 				err = json.Unmarshal(bodyJSON, &credentialsResponse)
 				assert.NoError(t, err, "unexpected error")
 
-				assert.Equal(t, serviceRequest.Username, credentialsResponse.ServiceUsername)
-				assert.Equal(t, serviceRequest.Password, credentialsResponse.Password)
+				assert.Equal(t, serviceRequest.ServiceUsername, credentialsResponse.ServiceUsername)
+				assert.Equal(t, serviceRequest.ServicePassword, credentialsResponse.ServicePassword)
 				assert.Equal(t, serviceRequest.EncryptionAlgorithm, credentialsResponse.EncryptionAlgorithm)
 			}
 		})
@@ -468,7 +469,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	testPass := "test_services_pass"
 
 	// create user
-	body := fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
@@ -477,7 +478,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
 
 	// login as user
-	body = fmt.Sprintf(`{"username": "%s", "password": "%s"}`, testUser, testPass)
+	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
 	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	rr = httptest.NewRecorder()
@@ -493,9 +494,9 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	// create service
 	serviceRequest := dto.CreateServiceRequest{
 		Service:             "test_service_1",
-		Username:            "test_user",
+		ServiceUsername:     "test_user",
 		Description:         "description",
-		Password:            "service_pass_1",
+		ServicePassword:     "service_pass_1",
 		EncryptionAlgorithm: "aes-gcm",
 		UserPassword:        testPass,
 	}
@@ -529,7 +530,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 			name:  "successfully updates password of service",
 			token: token,
 			updateRequest: dto.UpdateServiceRequest{
-				Password:            "new_password",
+				ServicePassword:     "new_password",
 				EncryptionAlgorithm: "aes-gcm",
 				UserPassword:        testPass,
 			},
@@ -540,8 +541,8 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 			name:  "fails with invalid request object",
 			token: token,
 			updateRequest: dto.UpdateServiceRequest{
-				Password:     "new_pass",
-				UserPassword: testPass,
+				ServicePassword: "new_pass",
+				UserPassword:    testPass,
 			},
 			serviceID: serviceID,
 			wantCode:  400,
