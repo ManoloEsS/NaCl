@@ -2,12 +2,11 @@ import z from 'zod'
 import { client } from '../api/client'
 import {
   CreateServiceSchema,
-  type CreateServiceRequest,
   DecryptServiceSchema,
-  type DecryptServiceRequest,
   UpdateServiceSchema,
   type UpdateServiceRequest,
-  type NewServiceFormRequest
+  type NewServiceFormRequest,
+  type DecryptRequest
 } from '../lib/requestValidation'
 import {
   ServiceCredentialsSchema,
@@ -34,13 +33,11 @@ export const listServices = async (): Promise<ServiceMetadata[]> => {
   return services
 }
 
-export const decryptService = async ({
-  serviceID,
-  ...decryptInput
-}: DecryptServiceRequest & {
-  serviceID: string
-}): Promise<ServiceCredentials> => {
-  const validated = DecryptServiceSchema.parse(decryptInput)
+export const decryptService = async (
+  reqData: DecryptRequest
+): Promise<ServiceCredentials> => {
+  const { serviceID, user_password } = reqData
+  const validated = DecryptServiceSchema.parse({ user_password })
   const validatedID = ServiceID.parse(serviceID)
   const req = await client.post(
     `/services/${validatedID}/credentials`,
