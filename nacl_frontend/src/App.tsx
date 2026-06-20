@@ -6,6 +6,9 @@ import { ToastProvider } from './context/ToastContext'
 import { Dashboard } from './pages/Dashboard'
 import { ProtectedRoute } from './componets/ProtectedRoute'
 import { RegistrationPage } from './pages/RegistrationPage'
+import { Vault } from './pages/Vault'
+import { NewService } from './pages/NewService'
+import { Account } from './pages/Account'
 
 function RootRedirect() {
   const { user } = useAuth()
@@ -24,10 +27,34 @@ export const App = () => {
               <Route path='/register' element={<RegistrationPage />} />
               <Route path='/' element={<RootRedirect />} />
               <Route
+                path='/account'
+                element={
+                  <ProtectedRoute>
+                    <Account />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path='/dash'
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='/vault'
+                element={
+                  <ProtectedRoute>
+                    <Vault />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='/new'
+                element={
+                  <ProtectedRoute>
+                    <NewService />
                   </ProtectedRoute>
                 }
               />
