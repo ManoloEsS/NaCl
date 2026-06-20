@@ -25,6 +25,7 @@ type Querier interface {
 	UpdateOperationDesc(ctx context.Context, arg UpdateOperationDescParams) error
 	UpdateService(ctx context.Context, arg UpdateServiceParams) (UpdateServiceRow, error)
 	UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error
+	UpdateUserPassHashAndKey(ctx context.Context, arg UpdateUserPassHashAndKeyParams) error
 	UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error)
 	UpdateUserSalt(ctx context.Context, arg UpdateUserSaltParams) error
 }
