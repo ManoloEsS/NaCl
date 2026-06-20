@@ -22,7 +22,13 @@ export const Layout = ({ children }: Props) => {
           <Link to={'/dash'}>NaCl</Link>
         </div>
         <div className='nav-links'>
-          <Link to='/dash'>Dashboard</Link>
+          <Link to='/vault'>Vault</Link>
+        </div>
+        <div className='nav-links'>
+          <Link to='/new'>New Service</Link>
+        </div>
+        <div className='nav-links'>
+          <Link to='/account'>Account</Link>
         </div>
         <div className='nav-user'>
           <span>{user?.username || user?.id}</span>
