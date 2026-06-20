@@ -27,6 +27,6 @@ export const updatePassword = async (
   newPassData: UpdatePasswordRequest
 ): Promise<void> => {
   const validated = UpdatePasswordSchema.parse(newPassData)
-  const { confirm_new_password, ...newData } = validated
+  const { confirm_new_password: _confirm_new_password, ...newData } = validated
   await client.patch('/users', newData)
 }

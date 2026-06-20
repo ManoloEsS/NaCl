@@ -21,7 +21,10 @@ const ServiceID = z.uuid()
 export const createService = async (
   newService: NewServiceFormRequest
 ): Promise<ServiceMetadata> => {
-  const { confirm_service_password, ...serviceData } = newService
+  const {
+    confirm_service_password: _confirm_service_password,
+    ...serviceData
+  } = newService
   const validated = CreateServiceSchema.parse(serviceData)
   const req = await client.post('/services', validated)
   return ServiceMetadataSchema.parse(req.data)

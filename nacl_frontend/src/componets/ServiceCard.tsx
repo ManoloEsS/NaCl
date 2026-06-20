@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import type {
   ServiceCredentials,
   ServiceMetadata
@@ -49,7 +49,7 @@ export const ServiceCard = ({ service }: ServiceProps) => {
     setUserPass('')
   }
 
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     setUserPass(event.target.value)
   }
 
