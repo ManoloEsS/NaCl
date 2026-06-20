@@ -3,6 +3,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   type ReactNode
 } from 'react'
 import { client } from '../api/client'
@@ -32,12 +33,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   )
   const [loading, setLoading] = useState(false)
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null)
     setUser(null)
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-  }
+  }, [])
 
   const login = async (loginData: LoginRequest): Promise<UserData> => {
     setLoading(true)
@@ -78,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
