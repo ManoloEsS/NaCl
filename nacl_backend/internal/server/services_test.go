@@ -416,7 +416,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 			token:     token,
 			userPass:  "wrong_pass",
 			serviceID: serviceData.ID,
-			wantCode:  401,
+			wantCode:  403,
 		},
 		{
 			name:      "invalid service id request fails",

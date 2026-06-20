@@ -32,3 +32,8 @@ WHERE id = $2;
 UPDATE users
 SET encrypted_master_key = $1
 WHERE id = $2;
+
+-- name: UpdateUserPassHashAndKey :exec
+UPDATE users
+SET password_hash = $1, encrypted_master_key = $2, updated_at = NOW()
+WHERE id = $3;

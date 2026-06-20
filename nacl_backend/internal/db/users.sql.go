@@ -102,6 +102,23 @@ func (q *Queries) UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) er
 	return err
 }
 
+const updateUserPassHashAndKey = `-- name: UpdateUserPassHashAndKey :exec
+UPDATE users
+SET password_hash = $1, encrypted_master_key = $2, updated_at = NOW()
+WHERE id = $3
+`
+
+type UpdateUserPassHashAndKeyParams struct {
+	PasswordHash       string    `json:"password_hash"`
+	EncryptedMasterKey string    `json:"encrypted_master_key"`
+	ID                 uuid.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateUserPassHashAndKey(ctx context.Context, arg UpdateUserPassHashAndKeyParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassHashAndKey, arg.PasswordHash, arg.EncryptedMasterKey, arg.ID)
+	return err
+}
+
 const updateUserPasswordHash = `-- name: UpdateUserPasswordHash :one
 UPDATE users
 SET password_hash = $1, updated_at = NOW()

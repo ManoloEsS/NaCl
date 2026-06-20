@@ -3,16 +3,18 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   type ReactNode
 } from 'react'
 import { client } from '../api/client'
 import { type UserData } from '../lib/responseValidation'
 import { loginService } from '../services/authServices'
+import type { LoginRequest } from '../lib/requestValidation'
 
 interface AuthContextType {
   user: { username: string; id: string } | null
   token: string | null
-  login: (username: string, password: string) => Promise<UserData>
+  login: (loginData: LoginRequest) => Promise<UserData>
   logout: () => void
   loading: boolean
 }
@@ -31,20 +33,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   )
   const [loading, setLoading] = useState(false)
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setToken(null)
     setUser(null)
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-  }
+  }, [])
 
-  const login = async (
-    username: string,
-    password: string
-  ): Promise<UserData> => {
+  const login = async (loginData: LoginRequest): Promise<UserData> => {
     setLoading(true)
     try {
-      const user: UserData = await loginService(username, password)
+      const user: UserData = await loginService(loginData)
       const { token, ...browserUser } = user
       setToken(token)
       setUser(browserUser)
@@ -71,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     fetchUser()
-  }, [])
+  }, [logout])
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
@@ -80,6 +79,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')

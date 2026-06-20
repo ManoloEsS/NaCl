@@ -64,6 +64,23 @@ type UpdateServiceRequest struct {
 	UserPassword        string `json:"user_password"`
 }
 
+type UpdatePasswordRequest struct {
+	UserPassword string `json:"user_password"`
+	NewPassword  string `json:"new_password"`
+}
+
+func (p *UpdatePasswordRequest) Validate() error {
+	if strings.TrimSpace(p.UserPassword) == "" {
+		return fmt.Errorf("user password is required")
+	}
+
+	if strings.TrimSpace(p.NewPassword) == "" {
+		return fmt.Errorf("new password is required")
+	}
+
+	return nil
+}
+
 func (r *CreateUserRequest) Validate() error {
 	if strings.TrimSpace(r.Username) == "" {
 		return fmt.Errorf("username is required")

@@ -57,6 +57,8 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 	r.Get("/", s.HandleIndex)
 
 	r.Post("/api/users", s.HandleCreateUser)
+	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
+		Patch("/api/users", s.HandleUpdateUserPassword)
 
 	r.Post("/api/login", s.HandleLogin)
 

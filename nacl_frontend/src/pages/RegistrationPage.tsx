@@ -22,7 +22,7 @@ export const RegistrationPage = () => {
 
   const onSubmit = async (data: CreateUserRequest) => {
     try {
-      await registerUser(data.username, data.user_password)
+      await registerUser(data)
       showToast('Registration successful! Redirecting to login...', 'success')
       setTimeout(() => navigate('/login', { replace: true }), 1500)
     } catch {

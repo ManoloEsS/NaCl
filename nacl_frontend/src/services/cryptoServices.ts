@@ -3,7 +3,10 @@ import { client } from '../api/client'
 import {
   CreateServiceSchema,
   DecryptServiceSchema,
-  UpdateServiceSchema
+  UpdateServiceSchema,
+  type UpdateServiceRequest,
+  type NewServiceFormRequest,
+  type DecryptRequest
 } from '../lib/requestValidation'
 import {
   ServiceCredentialsSchema,
@@ -15,15 +18,14 @@ import {
 
 const ServiceID = z.uuid()
 
-export const createService = async (newService: {
-  service: string
-  service_username: string
-  service_password: string
-  description: string
-  encryption_algorithm: string
-  user_password: string
-}): Promise<ServiceMetadata> => {
-  const validated = CreateServiceSchema.parse(newService)
+export const createService = async (
+  newService: NewServiceFormRequest
+): Promise<ServiceMetadata> => {
+  const {
+    confirm_service_password: _confirm_service_password,
+    ...serviceData
+  } = newService
+  const validated = CreateServiceSchema.parse(serviceData)
   const req = await client.post('/services', validated)
   return ServiceMetadataSchema.parse(req.data)
 }
@@ -34,12 +36,11 @@ export const listServices = async (): Promise<ServiceMetadata[]> => {
   return services
 }
 
-export const decryptService = async (decryptRequest: {
-  userPassword: string
-  serviceID: string
-}): Promise<ServiceCredentials> => {
-  const { serviceID, ...decryptInput } = decryptRequest
-  const validated = DecryptServiceSchema.parse(decryptInput)
+export const decryptService = async (
+  reqData: DecryptRequest
+): Promise<ServiceCredentials> => {
+  const { serviceID, user_password } = reqData
+  const validated = DecryptServiceSchema.parse({ user_password })
   const validatedID = ServiceID.parse(serviceID)
   const req = await client.post(
     `/services/${validatedID}/credentials`,
@@ -48,13 +49,10 @@ export const decryptService = async (decryptRequest: {
   return ServiceCredentialsSchema.parse(req.data)
 }
 
-export const updateService = async (updateRequest: {
-  servicePassword: string
-  encryptionAlgorithm: string
-  userPassword: string
-  serviceID: string
-}): Promise<ServiceMetadata> => {
-  const { serviceID, ...updateInput } = updateRequest
+export const updateService = async ({
+  serviceID,
+  ...updateInput
+}: UpdateServiceRequest & { serviceID: string }): Promise<ServiceMetadata> => {
   const validated = UpdateServiceSchema.parse(updateInput)
   const validatedID = ServiceID.parse(serviceID)
   const req = await client.patch(`/services/${validatedID}`, validated)

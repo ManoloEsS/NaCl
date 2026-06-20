@@ -12,6 +12,7 @@ export const LoginPage = () => {
     register,
     handleSubmit,
     setError,
+    reset,
     formState: { errors, isSubmitting }
   } = useForm<LoginRequest>({
     resolver: zodResolver(LoginSchema)
@@ -23,11 +24,11 @@ export const LoginPage = () => {
 
   const onSubmit = async (data: LoginRequest) => {
     try {
-      // TODO: handle userData differently to not rerender login page
-      const userData = await login(data.username, data.user_password)
+      const userData = await login(data)
       navigate(userData ? '/dash' : '/login', { replace: true })
     } catch {
       setError('root', { message: 'Invalid email or password' })
+      reset()
     }
   }
 
