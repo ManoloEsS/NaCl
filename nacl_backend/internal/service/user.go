@@ -90,6 +90,9 @@ func (svc *Service) UpdateUserPassword(ctx context.Context, userID uuid.UUID, ol
 	}
 
 	decodedSalt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)
+	if err != nil {
+		return err
+	}
 	newDerivedKey, err := encryption.DeriveKey(newPass, decodedSalt)
 	if err != nil {
 		return err
