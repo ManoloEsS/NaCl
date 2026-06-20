@@ -66,7 +66,7 @@ func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCredentials) {
 			s.RespondWithError(
-				w, http.StatusUnauthorized,
+				w, http.StatusForbidden,
 				"could not retrieve credentials",
 				apperr.WithAttrs(
 					fmt.Errorf("invalid credentials: %w", err),
@@ -78,7 +78,7 @@ func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request
 		}
 		if errors.Is(err, service.ErrUserNotFound) {
 			s.RespondWithError(
-				w, http.StatusUnauthorized,
+				w, http.StatusNotFound,
 				"not authorized",
 				apperr.WithAttrs(
 					fmt.Errorf("user not found: %w", err),
