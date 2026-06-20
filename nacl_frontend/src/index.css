@@ -9,7 +9,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .navbar { display: flex; align-items: center; gap: 1.5rem; background: #1a1a2e; color: white; padding: 0.75rem 1.5rem; }
 .navbar a { color: white; text-decoration: none; }
 .navbar a:hover { text-decoration: underline; }
-.nav-brand a { font-weight: bold; font-size: 1.1rem; }
+.nav-brand a { font-weight: bold; font-size: 1.5rem; }
 .nav-links { display: flex; gap: 1rem; flex: 1; }
 .nav-user { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; }
 .main-content { max-width: 960px; margin: 1.5rem auto; padding: 0 1rem; }
