@@ -8,11 +8,12 @@ import {
 import { client } from '../api/client'
 import { type UserData } from '../lib/responseValidation'
 import { loginService } from '../services/authServices'
+import type { LoginRequest } from '../lib/requestValidation'
 
 interface AuthContextType {
   user: { username: string; id: string } | null
   token: string | null
-  login: (username: string, password: string) => Promise<UserData>
+  login: (loginData: LoginRequest) => Promise<UserData>
   logout: () => void
   loading: boolean
 }
@@ -38,13 +39,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem('user')
   }
 
-  const login = async (
-    username: string,
-    password: string
-  ): Promise<UserData> => {
+  const login = async (loginData: LoginRequest): Promise<UserData> => {
     setLoading(true)
     try {
-      const user: UserData = await loginService(username, password)
+      const user: UserData = await loginService(loginData)
       const { token, ...browserUser } = user
       setToken(token)
       setUser(browserUser)
@@ -71,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
     fetchUser()
-  }, [])
+  }, [logout])
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout, loading }}>
