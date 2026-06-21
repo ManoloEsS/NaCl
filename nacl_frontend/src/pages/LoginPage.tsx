@@ -12,6 +12,7 @@ export const LoginPage = () => {
     register,
     handleSubmit,
     setError,
+    setFocus,
     reset,
     formState: { errors, isSubmitting }
   } = useForm<LoginRequest>({
@@ -27,8 +28,9 @@ export const LoginPage = () => {
       const userData = await login(data)
       navigate(userData ? '/dash' : '/login', { replace: true })
     } catch {
-      setError('root', { message: 'Invalid email or password' })
       reset()
+      setError('root', { message: 'Invalid email or password' })
+      setFocus('username')
     }
   }
 
