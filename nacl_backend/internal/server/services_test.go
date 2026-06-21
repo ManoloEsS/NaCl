@@ -26,26 +26,7 @@ func TestHandleCreateService(t *testing.T) {
 	testUser := "test_services_user"
 	testPass := "test_services_pass"
 
-	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr := httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
-
-	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr = httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
-
-	var loginResp dto.LoginResponse
-	err := json.NewDecoder(rr.Body).Decode(&loginResp)
-	assert.NoError(t, err, "could not decode login response")
-	token := loginResp.Token
+	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
 	tests := []struct {
 		name                string
@@ -154,28 +135,7 @@ func TestHandleListServices(t *testing.T) {
 	testUser := "test_services_user"
 	testPass := "test_services_pass"
 
-	// create user
-	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr := httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
-
-	// login as user
-	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr = httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
-
-	var loginResp dto.LoginResponse
-	err := json.NewDecoder(rr.Body).Decode(&loginResp)
-	assert.NoError(t, err, "could not decode login response")
-	token := loginResp.Token
+	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
 	services := []struct {
 		service         string
@@ -341,28 +301,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	testUser := "test_services_user"
 	testPass := "test_services_pass"
 
-	// create user
-	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr := httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
-
-	// login as user
-	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr = httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
-
-	var loginResp dto.LoginResponse
-	err := json.NewDecoder(rr.Body).Decode(&loginResp)
-	assert.NoError(t, err, "could not decode login response")
-	token := loginResp.Token
+	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
 	// create service
 	serviceRequest := dto.CreateServiceRequest{
@@ -375,10 +314,10 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	}
 
 	requestJSON, _ := json.Marshal(serviceRequest)
-	req = httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+	req := httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	rr = httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
@@ -468,28 +407,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	testUser := "test_services_user"
 	testPass := "test_services_pass"
 
-	// create user
-	body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr := httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusCreated, rr.Code, "user creation failed")
-
-	// login as user
-	body = fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, testUser, testPass)
-	req = httptest.NewRequest(http.MethodPost, "/api/login", strings.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-	rr = httptest.NewRecorder()
-
-	server.HTTPServer.Handler.ServeHTTP(rr, req)
-	assert.Equal(t, http.StatusOK, rr.Code, "login failed")
-
-	var loginResp dto.LoginResponse
-	err := json.NewDecoder(rr.Body).Decode(&loginResp)
-	assert.NoError(t, err, "could not decode login response")
-	token := loginResp.Token
+	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
 	// create service
 	serviceRequest := dto.CreateServiceRequest{
@@ -502,10 +420,10 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	}
 
 	requestJSON, _ := json.Marshal(serviceRequest)
-	req = httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+	req := httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-	rr = httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
