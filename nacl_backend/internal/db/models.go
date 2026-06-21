@@ -10,13 +10,12 @@ import (
 )
 
 type Operation struct {
-	ID          uuid.UUID        `json:"id"`
-	UserID      uuid.UUID        `json:"user_id"`
-	Type        string           `json:"type"`
-	Service     string           `json:"service"`
-	ServiceID   uuid.UUID        `json:"service_id"`
-	Description pgtype.Text      `json:"description"`
-	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	OpType    string           `json:"op_type"`
+	Service   string           `json:"service"`
+	ServiceID pgtype.UUID      `json:"service_id"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
 type Service struct {

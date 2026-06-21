@@ -11,7 +11,7 @@ import (
 )
 
 type Querier interface {
-	CreateOperation(ctx context.Context, arg CreateOperationParams) (Operation, error)
+	CreateOperation(ctx context.Context, arg CreateOperationParams) error
 	CreateService(ctx context.Context, arg CreateServiceParams) (CreateServiceRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) error
 	DeleteServiceById(ctx context.Context, arg DeleteServiceByIdParams) error
@@ -22,7 +22,6 @@ type Querier interface {
 	GetServiceById(ctx context.Context, arg GetServiceByIdParams) (Service, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
-	UpdateOperationDesc(ctx context.Context, arg UpdateOperationDescParams) error
 	UpdateService(ctx context.Context, arg UpdateServiceParams) (UpdateServiceRow, error)
 	UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error
 	UpdateUserPassHashAndKey(ctx context.Context, arg UpdateUserPassHashAndKeyParams) error

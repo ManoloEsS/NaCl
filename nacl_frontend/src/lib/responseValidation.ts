@@ -40,6 +40,16 @@ export const ServiceCredentialsSchema = z
   })
   .strict()
 
+export const OperationDataSchema = z.object({
+  id,
+  op_type: z.string(),
+  service,
+  service_id: id,
+  created_at: z.string().pipe(z.coerce.date())
+})
+
+export const OperationDataArraySchema = z.array(OperationDataSchema)
+
 export const ErrorSchema = z
   .object({
     error: z.string()
@@ -50,3 +60,5 @@ export type UserData = z.infer<typeof LoginResponseSchema>
 export type ServiceMetadata = z.infer<typeof ServiceMetadataSchema>
 export type ServiceCredentials = z.infer<typeof ServiceCredentialsSchema>
 export type ServiceArrayMetadata = z.infer<typeof ServiceMetadataArraySchema>
+export type OperationDataArray = z.infer<typeof OperationDataArraySchema>
+export type OperationData = z.infer<typeof OperationDataSchema>

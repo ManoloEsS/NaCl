@@ -183,3 +183,11 @@ type ServiceCredentialsResponse struct {
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 }
+
+type OperationDataResponse struct {
+	ID        uuid.UUID `json:"id"`
+	OpType    string    `json:"op_type"`
+	Service   string    `json:"service"`
+	ServiceID uuid.UUID `json:"service_id"`
+	CreatedAt time.Time `json:"created_at"`
+}

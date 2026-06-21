@@ -98,5 +98,10 @@ func (s *Server) HandleUpdateServicePassword(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	err = s.Svc.SaveOperation(r.Context(), "update", result.Service, userID, serviceID)
+	if err != nil {
+		s.Logger.Error("could not save operation", "type", "update", "service", result.Service)
+	}
+
 	s.RespondWithJSON(w, http.StatusOK, result)
 }

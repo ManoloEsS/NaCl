@@ -79,7 +79,7 @@ jobs:
       - name: Run tests
         run: |
           cd nacl_frontend
-          npm test -- --run
+          npm test
   
   build:
     name: build

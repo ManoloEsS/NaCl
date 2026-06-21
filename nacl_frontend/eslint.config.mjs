@@ -8,6 +8,10 @@ import eslintConfigPrettier from "eslint-config-prettier";
 export default [
   { ignores: ["dist"] },
   {
+    files: ["playwright.config.ts"],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: ["**/*.{js,jsx,ts,tsx}"],
     languageOptions: {
       ecmaVersion: 2020,

@@ -12,49 +12,35 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createOperation = `-- name: CreateOperation :one
+const createOperation = `-- name: CreateOperation :exec
 INSERT INTO operations (
     user_id,
-    type,
+    op_type,
     service,
-    service_id,
-    description
+    service_id
 )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, user_id, type, service, service_id, description, created_at
+VALUES ($1, $2, $3, $4)
 `
 
 type CreateOperationParams struct {
-	UserID      uuid.UUID   `json:"user_id"`
-	Type        string      `json:"type"`
-	Service     string      `json:"service"`
-	ServiceID   uuid.UUID   `json:"service_id"`
-	Description pgtype.Text `json:"description"`
+	UserID    uuid.UUID   `json:"user_id"`
+	OpType    string      `json:"op_type"`
+	Service   string      `json:"service"`
+	ServiceID pgtype.UUID `json:"service_id"`
 }
 
-func (q *Queries) CreateOperation(ctx context.Context, arg CreateOperationParams) (Operation, error) {
-	row := q.db.QueryRow(ctx, createOperation,
+func (q *Queries) CreateOperation(ctx context.Context, arg CreateOperationParams) error {
+	_, err := q.db.Exec(ctx, createOperation,
 		arg.UserID,
-		arg.Type,
+		arg.OpType,
 		arg.Service,
 		arg.ServiceID,
-		arg.Description,
 	)
-	var i Operation
-	err := row.Scan(
-		&i.ID,
-		&i.UserID,
-		&i.Type,
-		&i.Service,
-		&i.ServiceID,
-		&i.Description,
-		&i.CreatedAt,
-	)
-	return i, err
+	return err
 }
 
 const getOperationsForService = `-- name: GetOperationsForService :many
-SELECT id, user_id, type, service, service_id, description, created_at
+SELECT id, user_id, op_type, service, service_id, created_at
 FROM operations
 WHERE service = $1 AND user_id = $2
 `
@@ -76,10 +62,9 @@ func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperations
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.Type,
+			&i.OpType,
 			&i.Service,
 			&i.ServiceID,
-			&i.Description,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -93,7 +78,7 @@ func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperations
 }
 
 const getOperationsForUserId = `-- name: GetOperationsForUserId :many
-SELECT id, user_id, type, service, service_id, description, created_at
+SELECT id, user_id, op_type, service, service_id, created_at
 FROM operations
 WHERE user_id = $1
 `
@@ -110,10 +95,9 @@ func (q *Queries) GetOperationsForUserId(ctx context.Context, userID uuid.UUID) 
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.Type,
+			&i.OpType,
 			&i.Service,
 			&i.ServiceID,
-			&i.Description,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -124,21 +108,4 @@ func (q *Queries) GetOperationsForUserId(ctx context.Context, userID uuid.UUID) 
 		return nil, err
 	}
 	return items, nil
-}
-
-const updateOperationDesc = `-- name: UpdateOperationDesc :exec
-UPDATE operations
-SET description = $1
-WHERE id = $2 AND user_id = $3
-`
-
-type UpdateOperationDescParams struct {
-	Description pgtype.Text `json:"description"`
-	ID          uuid.UUID   `json:"id"`
-	UserID      uuid.UUID   `json:"user_id"`
-}
-
-func (q *Queries) UpdateOperationDesc(ctx context.Context, arg UpdateOperationDescParams) error {
-	_, err := q.db.Exec(ctx, updateOperationDesc, arg.Description, arg.ID, arg.UserID)
-	return err
 }

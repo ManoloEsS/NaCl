@@ -39,7 +39,7 @@ func TestHandleCreateUser(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
-			server.HandleCreateUser(rr, req)
+			server.HTTPServer.Handler.ServeHTTP(rr, req)
 
 			assert.Equal(t, tt.wantCode, rr.Code, "unexpected status code")
 
@@ -67,7 +67,7 @@ func TestHandleCreateUser_Duplicate(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
-	server.HandleCreateUser(rr, req)
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, 201, rr.Code)
 
 	// Try to create duplicate
@@ -75,7 +75,7 @@ func TestHandleCreateUser_Duplicate(t *testing.T) {
 	req2.Header.Set("Content-Type", "application/json")
 	rr2 := httptest.NewRecorder()
 
-	server.HandleCreateUser(rr2, req2)
+	server.HTTPServer.Handler.ServeHTTP(rr2, req2)
 
 	// Should fail with 500 (unique constraint violation)
 	assert.Equal(t, 500, rr2.Code)
@@ -91,7 +91,7 @@ func TestHandleCreateUser_InvalidJSON(t *testing.T) {
 	req.Header.Set("Content-Type", "application/json")
 	rr := httptest.NewRecorder()
 
-	server.HandleCreateUser(rr, req)
+	server.HTTPServer.Handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, 400, rr.Code)
 }

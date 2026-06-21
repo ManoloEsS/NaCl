@@ -1,13 +1,11 @@
--- name: CreateOperation :one
+-- name: CreateOperation :exec
 INSERT INTO operations (
     user_id,
-    type,
+    op_type,
     service,
-    service_id,
-    description
+    service_id
 )
-VALUES ($1, $2, $3, $4, $5)
-RETURNING *;
+VALUES ($1, $2, $3, $4);
 
 -- name: GetOperationsForUserId :many
 SELECT *
@@ -19,7 +17,3 @@ SELECT *
 FROM operations
 WHERE service = $1 AND user_id = $2;
 
--- name: UpdateOperationDesc :exec
-UPDATE operations
-SET description = $1
-WHERE id = $2 AND user_id = $3;

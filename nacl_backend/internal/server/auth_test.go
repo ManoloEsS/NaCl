@@ -93,7 +93,7 @@ func TestHandleLogin(t *testing.T) {
 			req.Header.Set("Content-Type", "application/json")
 			rr := httptest.NewRecorder()
 
-			server.HandleLogin(rr, req)
+			server.HTTPServer.Handler.ServeHTTP(rr, req)
 
 			assert.Equal(t, tt.loginWantCode, rr.Code, "unexpected status code")
 		})

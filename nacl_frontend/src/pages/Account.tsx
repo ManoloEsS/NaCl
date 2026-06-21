@@ -7,8 +7,28 @@ import {
 } from '../lib/requestValidation'
 import { useForm } from 'react-hook-form'
 import { updatePassword } from '../services/authServices'
+import { OperationData } from '../lib/responseValidation'
+import { useEffect, useState } from 'react'
+import { listOperations } from '../services/operationsServices'
+import { OperationCard } from '../componets/OperationCard'
 
 export const Account = () => {
+  const [operations, setOperations] = useState<OperationData[] | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchOperations = async () => {
+      setLoading(true)
+      try {
+        const operations = await listOperations()
+        setOperations(operations)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOperations()
+  }, [])
+
   const { showToast } = useToast()
   const {
     reset: resetPassUpdate,
@@ -39,6 +59,18 @@ export const Account = () => {
         showToast('Something went wrong', 'error')
       }
     }
+  }
+
+  const operationList = () => {
+    return (
+      <div>
+        {operations!
+          .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+          .map((o) => (
+            <OperationCard key={o.service_id} operation={o} />
+          ))}
+      </div>
+    )
   }
 
   return (
@@ -98,7 +130,9 @@ export const Account = () => {
           </button>
         </div>
       </form>
-      <div>TODO: Here will go the logs</div>
+      <div>
+        {loading ? <div>loading...</div> : <div>{operationList()}</div>}
+      </div>
     </Layout>
   )
 }
