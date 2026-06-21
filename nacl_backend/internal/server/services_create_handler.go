@@ -84,5 +84,9 @@ func (s *Server) HandleCreateService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = s.Svc.SaveOperation(r.Context(), "create", result.Service, userID, result.ID)
+	if err != nil {
+		s.Logger.Error("could not save operation", "type", "create", "service", result.Service)
+	}
 	s.RespondWithJSON(w, http.StatusCreated, result)
 }

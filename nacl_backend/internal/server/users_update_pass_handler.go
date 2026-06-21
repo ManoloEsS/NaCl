@@ -76,6 +76,12 @@ func (s *Server) HandleUpdateUserPassword(w http.ResponseWriter, r *http.Request
 		)
 		return
 	}
+
+	err = s.Svc.SaveOperation(r.Context(), "change password", "nil", userID, uuid.Nil)
+	if err != nil {
+		s.Logger.Error("could not save operation", "type", "change password", "error", err)
+	}
+
 	s.RespondWithJSON(w, http.StatusOK, nil)
 
 }
