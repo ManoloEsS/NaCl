@@ -9,16 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-type Operation struct {
-	ID        uuid.UUID        `json:"id"`
-	UserID    uuid.UUID        `json:"user_id"`
-	OpType    string           `json:"op_type"`
-	Service   string           `json:"service"`
-	ServiceID pgtype.UUID      `json:"service_id"`
-	CreatedAt pgtype.Timestamp `json:"created_at"`
-}
-
-type Service struct {
+type Credential struct {
 	ID                       uuid.UUID        `json:"id"`
 	Service                  string           `json:"service"`
 	EncryptedServiceUsername []byte           `json:"encrypted_service_username"`
@@ -28,6 +19,15 @@ type Service struct {
 	UserID                   uuid.UUID        `json:"user_id"`
 	CreatedAt                pgtype.Timestamp `json:"created_at"`
 	UpdatedAt                pgtype.Timestamp `json:"updated_at"`
+}
+
+type Operation struct {
+	ID           uuid.UUID        `json:"id"`
+	UserID       uuid.UUID        `json:"user_id"`
+	OpType       string           `json:"op_type"`
+	Service      string           `json:"service"`
+	CredentialID pgtype.UUID      `json:"credential_id"`
+	CreatedAt    pgtype.Timestamp `json:"created_at"`
 }
 
 type User struct {

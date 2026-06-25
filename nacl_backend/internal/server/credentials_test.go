@@ -16,15 +16,15 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
 )
 
-func TestHandleCreateService(t *testing.T) {
+func TestHandleCreateCredential(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
 	cleanupTestDB(t, testDB, "users")
 
 	server := newTestServer(t, testDB)
 
-	testUser := "test_services_user"
-	testPass := "test_services_pass"
+	testUser := "test_credentials_user"
+	testPass := "test_credentials_pass"
 
 	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
@@ -40,7 +40,7 @@ func TestHandleCreateService(t *testing.T) {
 		wantCode            int
 	}{
 		{
-			"successful creation of service",
+			"successful creation of credential",
 			"test_service_1",
 			"test_user",
 			"description",
@@ -73,7 +73,7 @@ func TestHandleCreateService(t *testing.T) {
 			http.StatusUnauthorized,
 		},
 		{
-			"successful creation of service with no description",
+			"successful creation of credential with no description",
 			"test_service_4",
 			"test_user",
 			"",
@@ -98,9 +98,9 @@ func TestHandleCreateService(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanupTestDB(t, testDB, "services")
+			cleanupTestDB(t, testDB, "credentials")
 
-			serviceRequest := dto.CreateServiceRequest{
+			serviceRequest := dto.CreateCredentialRequest{
 				Service:             tt.service,
 				ServiceUsername:     tt.serviceUsername,
 				Description:         tt.description,
@@ -110,7 +110,7 @@ func TestHandleCreateService(t *testing.T) {
 			}
 
 			requestJSON, _ := json.Marshal(serviceRequest)
-			req := httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+			req := httptest.NewRequest(http.MethodPost, "/api/credentials", strings.NewReader(string(requestJSON)))
 			req.Header.Set("Content-Type", "application/json")
 			if tt.authorized {
 				req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
@@ -125,15 +125,15 @@ func TestHandleCreateService(t *testing.T) {
 
 }
 
-func TestHandleListServices(t *testing.T) {
+func TestHandleListCredentials(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users", "services")
+	cleanupTestDB(t, testDB, "users", "credentials")
 
 	server := newTestServer(t, testDB)
 
-	testUser := "test_services_user"
-	testPass := "test_services_pass"
+	testUser := "test_credentials_user"
+	testPass := "test_credentials_pass"
 
 	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
@@ -181,7 +181,7 @@ func TestHandleListServices(t *testing.T) {
 	}
 
 	for _, service := range services {
-		serviceRequest := dto.CreateServiceRequest{
+		serviceRequest := dto.CreateCredentialRequest{
 			Service:             service.service,
 			ServiceUsername:     service.serviceUsername,
 			Description:         service.description,
@@ -191,7 +191,7 @@ func TestHandleListServices(t *testing.T) {
 		}
 
 		requestJSON, _ := json.Marshal(serviceRequest)
-		req := httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+		req := httptest.NewRequest(http.MethodPost, "/api/credentials", strings.NewReader(string(requestJSON)))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 		rr := httptest.NewRecorder()
@@ -264,7 +264,7 @@ func TestHandleListServices(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testToken := tt.setupFunc(tt.token)
-			req := httptest.NewRequest(http.MethodGet, "/api/services", nil)
+			req := httptest.NewRequest(http.MethodGet, "/api/credentials", nil)
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", testToken))
 			rr := httptest.NewRecorder()
 
@@ -276,7 +276,7 @@ func TestHandleListServices(t *testing.T) {
 			}
 			bodyJSON, err := io.ReadAll(rr.Body)
 			require.NoError(t, err, "error reading recorder body")
-			var servicesResponse []dto.ServiceMetadataResponse
+			var servicesResponse []dto.CredentialMetadataResponse
 			err = json.Unmarshal(bodyJSON, &servicesResponse)
 			require.NoError(t, err, "unexpected error")
 
@@ -291,20 +291,20 @@ func TestHandleListServices(t *testing.T) {
 
 }
 
-func TestHandleDecryptServiceByID(t *testing.T) {
+func TestHandleDecryptCredentialByID(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users", "services")
+	cleanupTestDB(t, testDB, "users", "credentials")
 
 	server := newTestServer(t, testDB)
 
-	testUser := "test_services_user"
-	testPass := "test_services_pass"
+	testUser := "test_credentials_user"
+	testPass := "test_credentials_pass"
 
 	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
 	// create service
-	serviceRequest := dto.CreateServiceRequest{
+	serviceRequest := dto.CreateCredentialRequest{
 		Service:             "test_service_1",
 		ServiceUsername:     "test_user",
 		Description:         "description",
@@ -314,7 +314,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	}
 
 	requestJSON, _ := json.Marshal(serviceRequest)
-	req := httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+	req := httptest.NewRequest(http.MethodPost, "/api/credentials", strings.NewReader(string(requestJSON)))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	rr := httptest.NewRecorder()
@@ -322,7 +322,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
 
-	var serviceData dto.ServiceMetadataResponse
+	var serviceData dto.CredentialMetadataResponse
 	bodyReader, err := io.ReadAll(rr.Body)
 	assert.NoError(t, err, "unexpected error")
 
@@ -368,11 +368,11 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			decryptRequest := dto.DecryptServiceRequest{
+			decryptRequest := dto.DecryptCredentialRequest{
 				UserPassword: tt.userPass,
 			}
 			requestJSON, _ := json.Marshal(decryptRequest)
-			urlPath := fmt.Sprintf("/api/services/%s/credentials", tt.serviceID.String())
+			urlPath := fmt.Sprintf("/api/credentials/%s/decrypt", tt.serviceID.String())
 			req = httptest.NewRequest(http.MethodPost, urlPath, strings.NewReader(string(requestJSON)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tt.token))
@@ -384,7 +384,7 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 			if tt.wantCode == 200 {
 				bodyJSON, err := io.ReadAll(rr.Body)
 				assert.NoError(t, err, "error reading recorder body")
-				var credentialsResponse dto.ServiceCredentialsResponse
+				var credentialsResponse dto.DecryptedCredentialResponse
 				err = json.Unmarshal(bodyJSON, &credentialsResponse)
 				assert.NoError(t, err, "unexpected error")
 
@@ -397,20 +397,20 @@ func TestHandleDecryptServiceByID(t *testing.T) {
 
 }
 
-func TestHandleUpdateServicePassword(t *testing.T) {
+func TestHandleUpdateCredentialPassword(t *testing.T) {
 	testDB := newTestDB(t)
 	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users", "services")
+	cleanupTestDB(t, testDB, "users", "credentials")
 
 	server := newTestServer(t, testDB)
 
-	testUser := "test_services_user"
-	testPass := "test_services_pass"
+	testUser := "test_credentials_user"
+	testPass := "test_credentials_pass"
 
 	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
 
 	// create service
-	serviceRequest := dto.CreateServiceRequest{
+	serviceRequest := dto.CreateCredentialRequest{
 		Service:             "test_service_1",
 		ServiceUsername:     "test_user",
 		Description:         "description",
@@ -420,7 +420,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	}
 
 	requestJSON, _ := json.Marshal(serviceRequest)
-	req := httptest.NewRequest(http.MethodPost, "/api/services", strings.NewReader(string(requestJSON)))
+	req := httptest.NewRequest(http.MethodPost, "/api/credentials", strings.NewReader(string(requestJSON)))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	rr := httptest.NewRecorder()
@@ -428,7 +428,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	server.HTTPServer.Handler.ServeHTTP(rr, req)
 	assert.Equal(t, http.StatusCreated, rr.Code, "error crating service")
 
-	var serviceData dto.ServiceMetadataResponse
+	var serviceData dto.CredentialMetadataResponse
 	bodyReader, err := io.ReadAll(rr.Body)
 	assert.NoError(t, err, "unexpected error")
 
@@ -440,14 +440,14 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	tests := []struct {
 		name          string
 		token         string
-		updateRequest dto.UpdateServiceRequest
+		updateRequest dto.UpdateCredentialRequest
 		serviceID     uuid.UUID
 		wantCode      int
 	}{
 		{
 			name:  "successfully updates password of service",
 			token: token,
-			updateRequest: dto.UpdateServiceRequest{
+			updateRequest: dto.UpdateCredentialRequest{
 				ServicePassword:     "new_password",
 				EncryptionAlgorithm: "aes-gcm",
 				UserPassword:        testPass,
@@ -458,7 +458,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 		{
 			name:  "fails with invalid request object",
 			token: token,
-			updateRequest: dto.UpdateServiceRequest{
+			updateRequest: dto.UpdateCredentialRequest{
 				ServicePassword: "new_pass",
 				UserPassword:    testPass,
 			},
@@ -470,7 +470,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			requestJSON, _ := json.Marshal(tt.updateRequest)
-			urlPath := fmt.Sprintf("/api/services/%s", tt.serviceID.String())
+			urlPath := fmt.Sprintf("/api/credentials/%s", tt.serviceID.String())
 			req = httptest.NewRequest(http.MethodPatch, urlPath, strings.NewReader(string(requestJSON)))
 			req.Header.Set("Content-Type", "application/json")
 			req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", tt.token))
@@ -480,7 +480,7 @@ func TestHandleUpdateServicePassword(t *testing.T) {
 				server.HTTPServer.Handler.ServeHTTP(rr, req)
 				assert.Equal(t, tt.wantCode, rr.Code)
 
-				var updatedServiceData dto.ServiceMetadataResponse
+				var updatedServiceData dto.CredentialMetadataResponse
 				bodyReader, err := io.ReadAll(rr.Body)
 				assert.NoError(t, err, "unexpected error")
 

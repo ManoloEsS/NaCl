@@ -1,5 +1,5 @@
--- name: CreateService :one
-INSERT INTO services (
+-- name: CreateCredential :one
+INSERT INTO credentials (
     service,
     encrypted_service_username,
     description,
@@ -10,24 +10,25 @@ INSERT INTO services (
 VALUES($1, $2, $3, $4, $5, $6)
 RETURNING id, service, description, encryption_algorithm;
 
--- name: GetServiceById :one
+-- name: GetCredentialById :one
 SELECT *
-FROM services
-WHERE id = $1 and user_id = $2;
+FROM credentials
+WHERE id = $1;
 
--- name: GetAllServicesForUserId :many
+-- name: GetAllCredentialsForUserId :many
 SELECT id, service, description, encryption_algorithm 
-FROM services
+FROM credentials
 WHERE user_id = $1;
 
--- name: UpdateService :one
-UPDATE services
+-- name: UpdateCredential :one
+UPDATE credentials
 SET encrypted_password = $1,
     encryption_algorithm = $2,
     updated_at = NOW()
 WHERE id = $3 AND user_id = $4
 RETURNING id, service, description, encryption_algorithm;
 
--- name: DeleteServiceById :exec
-DELETE FROM services
-WHERE id = $1 AND user_id = $2;
+-- name: DeleteCredentialById :one
+DELETE FROM credentials
+WHERE id = $1
+RETURNING service;

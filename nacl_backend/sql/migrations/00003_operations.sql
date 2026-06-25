@@ -4,10 +4,10 @@ CREATE TABLE operations (
     user_id UUID NOT NULL,
     op_type TEXT NOT NULL,
     service TEXT NOT NULL,
-    service_id UUID,
+    credential_id UUID,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT fk_service FOREIGN KEY (service_id)
-    REFERENCES services(id),
+    CONSTRAINT fk_credential FOREIGN KEY (credential_id)
+    REFERENCES credentials(id),
     CONSTRAINT fk_user FOREIGN KEY (user_id)
     REFERENCES users(id) ON DELETE CASCADE
 );

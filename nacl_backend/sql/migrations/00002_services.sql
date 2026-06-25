@@ -1,5 +1,5 @@
 -- +goose Up
-CREATE TABLE services (
+CREATE TABLE credentials (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
     service TEXT NOT NULL,
     encrypted_service_username BYTEA NOT NULL,
@@ -14,4 +14,4 @@ CREATE TABLE services (
 );
 
 -- +goose Down
-DROP TABLE services;
+DROP TABLE credentials;

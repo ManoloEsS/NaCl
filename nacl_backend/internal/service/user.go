@@ -123,3 +123,12 @@ func (svc *Service) UpdateUserPassword(ctx context.Context, userID uuid.UUID, ol
 
 	return nil
 }
+
+func (svc *Service) GetUserData(ctx context.Context, userID uuid.UUID) (db.User, error) {
+	user, err := svc.Db.Queries().GetUserById(ctx, userID)
+	if err != nil {
+		return db.User{}, err
+	}
+
+	return user, nil
+}

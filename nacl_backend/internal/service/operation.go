@@ -9,14 +9,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (svc *Service) SaveOperation(ctx context.Context, opType, service string, userID, serviceID uuid.UUID) error {
+func (svc *Service) SaveOperation(ctx context.Context, opType, service string, userID, credentialID uuid.UUID) error {
 	operation := db.CreateOperationParams{
 		UserID:  userID,
 		OpType:  opType,
 		Service: service,
-		ServiceID: pgtype.UUID{
-			Bytes: [16]byte(serviceID),
-			Valid: serviceID != uuid.Nil,
+		CredentialID: pgtype.UUID{
+			Bytes: [16]byte(credentialID),
+			Valid: credentialID != uuid.Nil,
 		},
 	}
 
@@ -36,16 +36,16 @@ func (svc *Service) ListOpsforUserID(ctx context.Context, userID uuid.UUID) ([]d
 
 	parsedOps := make([]dto.OperationDataResponse, len(ops))
 	for i, op := range ops {
-		parsedSvcID, err := uuid.FromBytes(op.ServiceID.Bytes[:])
+		parsedSvcID, err := uuid.FromBytes(op.CredentialID.Bytes[:])
 		if err != nil {
 			parsedSvcID = uuid.Nil
 		}
 		operation := dto.OperationDataResponse{
-			ID:        op.ID,
-			OpType:    op.OpType,
-			Service:   op.Service,
-			ServiceID: parsedSvcID,
-			CreatedAt: op.CreatedAt.Time,
+			ID:           op.ID,
+			OpType:       op.OpType,
+			Service:      op.Service,
+			CredentialID: parsedSvcID,
+			CreatedAt:    op.CreatedAt.Time,
 		}
 		parsedOps[i] = operation
 	}
