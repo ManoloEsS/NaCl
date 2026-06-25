@@ -90,7 +90,7 @@ Encode both `master_key_salt` and `encrypted_master_key` as **base64 strings** (
 
 ### Context
 
-Handler methods on the `Server` struct used inconsistent naming: some were unexported (`handlerCreateUser`), some used unclear actions (`handlerGetAllServicesUser`), and some abbreviated names (`handlerUpdateServicePass`). The `handler` prefix was redundant on methods since the receiver (`Server`) already provides context.
+Handler methods on the `Server` struct used inconsistent naming: some were unexported (`handlerCreateUser`), some used unclear actions (`handlerGetAllCredentialsUser`), and some abbreviated names (`handlerUpdateServicePass`). The `handler` prefix was redundant on methods since the receiver (`Server`) already provides context.
 
 ### Decision
 
@@ -98,9 +98,9 @@ Use the `Handle<Action><Resource>` pattern for all handler methods:
 
 ```go
 func (s *Server) HandleCreateUser(w http.ResponseWriter, r *http.Request)
-func (s *Server) HandleListServices(w http.ResponseWriter, r *http.Request)
-func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request)
-func (s *Server) HandleUpdateServicePassword(w http.ResponseWriter, r *http.Request)
+func (s *Server) HandleListCredentials(w http.ResponseWriter, r *http.Request)
+func (s *Server) HandleDecryptCredentialByID(w http.ResponseWriter, r *http.Request)
+func (s *Server) HandleUpdateCredentialPassword(w http.ResponseWriter, r *http.Request)
 ```
 
 Rules:
@@ -108,13 +108,13 @@ Rules:
 - Action verbs are clear: `Create`, `List`, `Decrypt`, `Update`, `Login`
 - Collection endpoints use `List` (REST convention) not `GetAll`
 - No abbreviations: `Password` not `Pass`, `Service` not `Svc`
-- Resource names are explicit: `ServicePassword` not `ServicePass`, `ServiceByID` not `ByID`
+- Resource names are explicit: `CredentialPassword` not `CredentialPass`, `CredentialByID` not `ByID`
 
 ### Consequences
 
 - Handler names are self-documenting and searchable
-- Route registration in `RegisterRoutes` reads clearly: `r.Post("/api/services", s.HandleCreateService)`
-- Test names follow naturally: `TestHandleCreateUser`, `TestHandleListServices`
+- Route registration in `RegisterRoutes` reads clearly: `r.Post("/api/credentials", s.HandleCreateCredential)`
+- Test names follow naturally: `TestHandleCreateUser`, `TestHandleListCredentials`
 
 ---
 
@@ -181,7 +181,7 @@ type Service struct {
 var (
     ErrInvalidCredentials = errors.New("invalid credentials")
     ErrUserNotFound       = errors.New("user not found")
-    ErrServiceNotFound    = errors.New("service not found")
+    ErrCredentialNotFound    = errors.New("credential not found")
 )
 ```
 
@@ -219,9 +219,9 @@ Name request structs with the pattern `<Action><Resource>Request`, matching the 
 |---|---|---|
 | `UserRequest` (for create) | `CreateUserRequest` | Explicit action |
 | `UserRequest` (for login) | `LoginRequest` | Separate type for separate operation |
-| `NewServiceRequest` | `CreateServiceRequest` | No redundant "New" prefix |
-| `CredentialsRequest` | `DecryptServiceRequest` | Describes the action, not a vague noun |
-| `UpdateServiceRequest` | `UpdateServiceRequest` | Already correct |
+| `NewServiceRequest` | `CreateCredentialRequest` | No redundant "New" prefix |
+| `CredentialsRequest` | `DecryptCredentialRequest` | Describes the action, not a vague noun |
+| `UpdateServiceRequest` | `UpdateCredentialRequest` | Renamed to match resource |
 
 ### Consequences
 
@@ -322,7 +322,7 @@ The sentinel error `errInvalidUserID` was declared in `services_create_handler.g
 
 Package-level sentinel errors are consolidated into dedicated files:
 - `internal/server/errors.go` — handler-level errors (`errInvalidUserID`)
-- `internal/service/errors.go` — service-level errors (`ErrInvalidCredentials`, `ErrUserNotFound`, `ErrServiceNotFound`)
+- `internal/service/errors.go` — service-level errors (`ErrInvalidCredentials`, `ErrUserNotFound`, `ErrCredentialNotFound`)
 
 ### Consequences
 

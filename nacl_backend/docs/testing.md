@@ -248,14 +248,14 @@ Use `cleanupTestDB` to truncate tables between test cases:
 ```go
 for _, tt := range tests {
     t.Run(tt.name, func(t *testing.T) {
-        cleanupTestDB(t, testDB, "services")
+        cleanupTestDB(t, testDB, "credentials")
 
         // ... run test ...
     })
 }
 ```
 
-Truncate tables that the current test modifies, not all tables. For example, when testing service creation, truncate `"services"` but not `"users"` (the user persists across subtests).
+Truncate tables that the current test modifies, not all tables. For example, when testing service creation, truncate `"credentials"` but not `"users"` (the user persists across subtests).
 
 ---
 

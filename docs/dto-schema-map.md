@@ -11,14 +11,14 @@ Maps backend Go DTOs (`internal/dto/dto.go`) to frontend Zod schemas (`src/lib/`
 | `POST /api/users` | `CreateUserRequest` | `CreateUserSchema` (`request_validation.ts`) | `username` → `z.string().min(1)` |
 | | | | `user_password` → `z.string().min(1)` |
 | `POST /api/login` | `LoginRequest` | `LoginSchema` alias (`CreateUserSchema`) | Same as above |
-| `POST /api/services` | `CreateServiceRequest` | `CreateServiceSchema` (`request_validation.ts`) | `service` → `z.string().min(1)` |
+| `POST /api/credentials` | `CreateCredentialRequest` | `CreateCredentialSchema` (`request_validation.ts`) | `service` → `z.string().min(1)` |
 | | | | `service_username` → `z.string().min(1)` |
 | | | | `service_password` → `z.string().min(1)` |
 | | | | `description` → `z.string().optional()` |
 | | | | `encryption_algorithm` → `z.enum(['aes-gcm'])` |
 | | | | `user_password` → `z.string().min(1)` |
-| `POST /api/services/{id}/credentials` | `DecryptServiceRequest` | `DecryptServiceSchema` (`request_validation.ts`) | `user_password` → `z.string().min(1)` |
-| `PATCH /api/services/{id}` | `UpdateServiceRequest` | `UpdateServiceSchema` (`request_validation.ts`) | `service_password` → `z.string().min(1)` |
+| `POST /api/credentials/{id}/decrypt` | `DecryptCredentialRequest` | `DecryptCredentialSchema` (`request_validation.ts`) | `user_password` → `z.string().min(1)` |
+| `PATCH /api/credentials/{id}` | `UpdateCredentialRequest` | `UpdateCredentialSchema` (`request_validation.ts`) | `service_password` → `z.string().min(1)` |
 | | | | `encryption_algorithm` → `z.enum(['aes-gcm'])` |
 | | | | `user_password` → `z.string().min(1)` |
 
@@ -29,11 +29,11 @@ Maps backend Go DTOs (`internal/dto/dto.go`) to frontend Zod schemas (`src/lib/`
 | `POST /api/login` | `LoginResponse` | `LoginResponseSchema` (`response_validation.ts`) | `id` → `z.uuid()` |
 | | | | `username` → `z.string().min(1)` |
 | | | | `token` → `z.string()` |
-| `POST /api/services` | `ServiceMetadataResponse` | `ServiceMetadataSchema` (`response_validation.ts`) | `id` → `z.uuid()` |
-| `GET /api/services` | | | `service` → `z.string()` |
-| `PATCH /api/services/{id}` | | | `description` → `z.string().optional()` |
+| `POST /api/credentials` | `CredentialMetadataResponse` | `CredentialMetadataSchema` (`response_validation.ts`) | `id` → `z.uuid()` |
+| `GET /api/credentials` | | | `service` → `z.string()` |
+| `PATCH /api/credentials/{id}` | | | `description` → `z.string().optional()` |
 | | | | `encryption_algorithm` → `z.enum(['aes-gcm'])` |
-| `POST /api/services/{id}/credentials` | `ServiceCredentialsResponse` | `ServiceCredentialsSchema` (`response_validation.ts`) | `service` → `z.string()` |
+| `POST /api/credentials/{id}/decrypt` | `DecryptedCredentialResponse` | `DecryptedCredentialSchema` (`response_validation.ts`) | `service` → `z.string()` |
 | | | | `service_username` → `z.string().min(1)` |
 | | | | `description` → `z.string().optional()` |
 | | | | `service_password` → `z.string().min(1)` |
@@ -48,8 +48,8 @@ Maps backend Go DTOs (`internal/dto/dto.go`) to frontend Zod schemas (`src/lib/`
 |-------|------|
 | Backend DTOs | `nacl_backend/internal/dto/dto.go` |
 | Frontend primitives | `nacl_frontend/src/lib/primitives.ts` |
-| Frontend request validation | `nacl_frontend/src/lib/request_validation.ts` |
-| Frontend response validation | `nacl_frontend/src/lib/response_validation.ts` |
+| Frontend request validation | `nacl_frontend/src/lib/requestValidation.ts` |
+| Frontend response validation | `nacl_frontend/src/lib/responseValidation.ts` |
 
 ## Notes
 

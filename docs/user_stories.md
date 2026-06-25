@@ -45,7 +45,7 @@ This document tracks all user stories, their requirements, and task breakdowns f
 ### Phase 2: Password Management Backend
 **Backend tasks only - core product functionality**
 
-6. **US-5: Save Service Passwords** - Encrypt + store
+6. **US-5: Save Credential Passwords** - Encrypt + store
 7. **US-6: View Passwords List** - Full CRUD + decrypt endpoints
 8. **US-7: Change Login Password** - Key rotation
 9. **US-8: Audit Trail** - Operations logging
@@ -224,7 +224,7 @@ This document tracks all user stories, their requirements, and task breakdowns f
 
 ---
 
-### US-5: Save Service Passwords
+### US-5: Save Credential Passwords
 **As a** user  
 **I want to** save passwords and account names for services  
 **So that** I can securely store my credentials encrypted
