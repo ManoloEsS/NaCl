@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 	userID, ok := auth.UserIDFromContext(r.Context())
 
@@ -30,7 +30,7 @@ func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	decryptReq, err := dto.DecodeAndValidate[*dto.DecryptServiceRequest](r.Body)
+	req, err := dto.DecodeAndValidate[*dto.DeleteCredentialsRequest](r.Body)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not process payload: %w", err),
@@ -56,68 +56,52 @@ func (s *Server) HandleDecryptServiceByID(w http.ResponseWriter, r *http.Request
 		s.RespondWithError(
 			w,
 			http.StatusBadRequest,
-			"could not retrieve credentials",
+			"could not delete credentials",
 			err,
 		)
 		return
 	}
 
-	result, err := s.Svc.DecryptServiceByID(r.Context(), userID, serviceID, decryptReq.UserPassword)
+	serviceName, err := s.Svc.DeleteCredentials(r.Context(), userID, serviceID, req.UserPassword)
 	if err != nil {
-		if errors.Is(err, service.ErrInvalidCredentials) {
+		if errors.Is(err, service.ErrCredentialNotFound) {
+			s.RespondWithJSON(w, http.StatusNoContent, nil)
+			return
+		}
+
+		if errors.Is(err, service.ErrUnauthorized) {
+			err := apperr.WithAttrs(
+				fmt.Errorf("user not authorized: %w", err),
+				"userID", userID.String(),
+				"endpoint", endpointReqPath,
+			)
 			s.RespondWithError(
 				w, http.StatusForbidden,
-				"could not retrieve credentials",
-				apperr.WithAttrs(
-					fmt.Errorf("invalid credentials: %w", err),
-					"userID", userID.String(),
-					"endpoint", endpointReqPath,
-				),
+				"could not delete credentials",
+				err,
 			)
 			return
 		}
-		if errors.Is(err, service.ErrUserNotFound) {
-			s.RespondWithError(
-				w, http.StatusNotFound,
-				"not authorized",
-				apperr.WithAttrs(
-					fmt.Errorf("user not found: %w", err),
-					"userID", userID.String(),
-					"endpoint", endpointReqPath,
-				),
-			)
-			return
-		}
-		if errors.Is(err, service.ErrServiceNotFound) {
-			s.RespondWithError(
-				w,
-				http.StatusNotFound,
-				"could not retrieve credentials",
-				apperr.WithAttrs(
-					fmt.Errorf("service not found: %w", err),
-					"userID", userID.String(),
-					"endpoint", endpointReqPath,
-				),
-			)
-			return
-		}
+
 		err = apperr.WithAttrs(
-			fmt.Errorf("could not decrypt credentials: %w", err),
+			fmt.Errorf("could not delete credentials from db: %w", err),
 			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
 			w,
 			http.StatusInternalServerError,
-			"could not retrieve credentials",
+			"could not delete credentials",
 			err,
 		)
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), "decrypt", result.Service, userID, serviceID)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeDelete, serviceName, userID, serviceID)
 	if err != nil {
-		s.Logger.Error("could not save operation", "type", "decrypt", "service", result.Service)
+		s.Logger.Error("could not save operation", "type", service.TypeDelete.String(), "service", serviceName)
 	}
-	s.RespondWithJSON(w, http.StatusOK, result)
+
+	s.RespondWithJSON(w, http.StatusNoContent, nil)
+
 }

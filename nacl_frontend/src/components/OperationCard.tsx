@@ -17,7 +17,6 @@ export const OperationCard = ({ operation }: OperationProps) => {
     <div>
       <div style={serviceStyle}>
         <div>Service: {operation.service}</div>
-        <div>Service ID: {operation.id}</div>
         <div>Operation type: {operation.op_type}</div>
         <div>Time: {operation.created_at.toString()}</div>
       </div>

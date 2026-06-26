@@ -9,10 +9,10 @@ import (
 )
 
 func TestHandleIndex(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
+	pool, queries := newTestDB(t)
+	defer pool.Close()
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rr := httptest.NewRecorder()

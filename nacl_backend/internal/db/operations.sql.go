@@ -17,16 +17,16 @@ INSERT INTO operations (
     user_id,
     op_type,
     service,
-    service_id
+    credential_id
 )
 VALUES ($1, $2, $3, $4)
 `
 
 type CreateOperationParams struct {
-	UserID    uuid.UUID   `json:"user_id"`
-	OpType    string      `json:"op_type"`
-	Service   string      `json:"service"`
-	ServiceID pgtype.UUID `json:"service_id"`
+	UserID       uuid.UUID   `json:"user_id"`
+	OpType       string      `json:"op_type"`
+	Service      string      `json:"service"`
+	CredentialID pgtype.UUID `json:"credential_id"`
 }
 
 func (q *Queries) CreateOperation(ctx context.Context, arg CreateOperationParams) error {
@@ -34,13 +34,13 @@ func (q *Queries) CreateOperation(ctx context.Context, arg CreateOperationParams
 		arg.UserID,
 		arg.OpType,
 		arg.Service,
-		arg.ServiceID,
+		arg.CredentialID,
 	)
 	return err
 }
 
 const getOperationsForService = `-- name: GetOperationsForService :many
-SELECT id, user_id, op_type, service, service_id, created_at
+SELECT id, user_id, op_type, service, credential_id, created_at
 FROM operations
 WHERE service = $1 AND user_id = $2
 `
@@ -64,7 +64,7 @@ func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperations
 			&i.UserID,
 			&i.OpType,
 			&i.Service,
-			&i.ServiceID,
+			&i.CredentialID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -78,7 +78,7 @@ func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperations
 }
 
 const getOperationsForUserId = `-- name: GetOperationsForUserId :many
-SELECT id, user_id, op_type, service, service_id, created_at
+SELECT id, user_id, op_type, service, credential_id, created_at
 FROM operations
 WHERE user_id = $1
 `
@@ -97,7 +97,7 @@ func (q *Queries) GetOperationsForUserId(ctx context.Context, userID uuid.UUID) 
 			&i.UserID,
 			&i.OpType,
 			&i.Service,
-			&i.ServiceID,
+			&i.CredentialID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

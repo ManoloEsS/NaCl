@@ -45,7 +45,7 @@ type LoginRequest struct {
 	UserPassword string `json:"user_password"`
 }
 
-type CreateServiceRequest struct {
+type CreateCredentialRequest struct {
 	Service             string `json:"service"`
 	ServiceUsername     string `json:"service_username"`
 	Description         string `json:"description,omitempty"`
@@ -54,11 +54,11 @@ type CreateServiceRequest struct {
 	UserPassword        string `json:"user_password"`
 }
 
-type DecryptServiceRequest struct {
+type DecryptCredentialRequest struct {
 	UserPassword string `json:"user_password"`
 }
 
-type UpdateServiceRequest struct {
+type UpdateCredentialRequest struct {
 	ServicePassword     string `json:"service_password"`
 	EncryptionAlgorithm string `json:"encryption_algorithm"`
 	UserPassword        string `json:"user_password"`
@@ -67,6 +67,10 @@ type UpdateServiceRequest struct {
 type UpdatePasswordRequest struct {
 	UserPassword string `json:"user_password"`
 	NewPassword  string `json:"new_password"`
+}
+
+type DeleteCredentialsRequest struct {
+	UserPassword string `json:"user_password"`
 }
 
 func (p *UpdatePasswordRequest) Validate() error {
@@ -103,7 +107,7 @@ func (r *LoginRequest) Validate() error {
 	return nil
 }
 
-func (r *CreateServiceRequest) Validate() error {
+func (r *CreateCredentialRequest) Validate() error {
 	if strings.TrimSpace(r.Service) == "" {
 		return fmt.Errorf("service name is required")
 	}
@@ -127,7 +131,7 @@ func (r *CreateServiceRequest) Validate() error {
 	return nil
 }
 
-func (r *DecryptServiceRequest) Validate() error {
+func (r *DecryptCredentialRequest) Validate() error {
 	if strings.TrimSpace(r.UserPassword) == "" {
 		return fmt.Errorf("user password is required")
 	}
@@ -135,7 +139,7 @@ func (r *DecryptServiceRequest) Validate() error {
 	return nil
 }
 
-func (r *UpdateServiceRequest) Validate() error {
+func (r *UpdateCredentialRequest) Validate() error {
 	if r.ServicePassword == "" {
 		return fmt.Errorf("password is required")
 	}
@@ -145,6 +149,14 @@ func (r *UpdateServiceRequest) Validate() error {
 	}
 
 	if r.UserPassword == "" {
+		return fmt.Errorf("user password is required")
+	}
+
+	return nil
+}
+
+func (d *DeleteCredentialsRequest) Validate() error {
+	if strings.TrimSpace(d.UserPassword) == "" {
 		return fmt.Errorf("user password is required")
 	}
 
@@ -167,14 +179,14 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-type ServiceMetadataResponse struct {
+type CredentialMetadataResponse struct {
 	ID                  uuid.UUID `json:"id"`
 	Service             string    `json:"service"`
 	Description         string    `json:"description"`
 	EncryptionAlgorithm string    `json:"encryption_algorithm"`
 }
 
-type ServiceCredentialsResponse struct {
+type DecryptedCredentialResponse struct {
 	Service             string    `json:"service"`
 	ServiceUsername     string    `json:"service_username"`
 	Description         string    `json:"description"`
@@ -185,9 +197,9 @@ type ServiceCredentialsResponse struct {
 }
 
 type OperationDataResponse struct {
-	ID        uuid.UUID `json:"id"`
-	OpType    string    `json:"op_type"`
-	Service   string    `json:"service"`
-	ServiceID uuid.UUID `json:"service_id"`
-	CreatedAt time.Time `json:"created_at"`
+	ID           uuid.UUID `json:"id"`
+	OpType       string    `json:"op_type"`
+	Service      string    `json:"service"`
+	CredentialID uuid.UUID `json:"credential_id"`
+	CreatedAt    time.Time `json:"created_at"`
 }

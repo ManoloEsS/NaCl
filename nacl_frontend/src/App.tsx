@@ -1,13 +1,13 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import ErrorBoundary from './componets/ErrorBoundary'
+import ErrorBoundary from './components/ErrorBoundary'
 import { LoginPage } from './pages/LoginPage'
 import { ToastProvider } from './context/ToastContext'
 import { Dashboard } from './pages/Dashboard'
-import { ProtectedRoute } from './componets/ProtectedRoute'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { RegistrationPage } from './pages/RegistrationPage'
 import { Vault } from './pages/Vault'
-import { NewService } from './pages/NewService'
+import { NewCredential } from './pages/NewCredential'
 import { Account } from './pages/Account'
 
 function RootRedirect() {
@@ -54,7 +54,7 @@ export const App = () => {
                 path='/new'
                 element={
                   <ProtectedRoute>
-                    <NewService />
+                    <NewCredential />
                   </ProtectedRoute>
                 }
               />

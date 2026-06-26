@@ -29,7 +29,7 @@ export const UpdatePasswordSchema = z
   })
   .strict()
 
-export const CreateServiceSchema = z
+export const CreateCredentialSchema = z
   .object({
     service: z.string().min(1, 'Service required'),
     service_username,
@@ -40,7 +40,7 @@ export const CreateServiceSchema = z
   })
   .strict()
 
-export const NewServiceFormSchema = CreateServiceSchema.extend({
+export const NewCredentialFormSchema = CreateCredentialSchema.extend({
   confirm_service_password: z.string().min(1, 'Please confirm password')
 })
   .refine((data) => data.service_password === data.confirm_service_password, {
@@ -49,17 +49,17 @@ export const NewServiceFormSchema = CreateServiceSchema.extend({
   })
   .strict()
 
-export const DecryptServiceSchema = z
+export const DecryptCredentialSchema = z
   .object({
     user_password
   })
   .strict()
 
-export const DecryptRequestSchema = DecryptServiceSchema.extend({
-  serviceID: z.uuid()
+export const DecryptRequestSchema = DecryptCredentialSchema.extend({
+  credentialID: z.uuid()
 }).strict()
 
-export const UpdateServiceSchema = z
+export const UpdateCredentialSchema = z
   .object({
     service_password,
     encryption_algorithm,
@@ -69,9 +69,9 @@ export const UpdateServiceSchema = z
 
 export type CreateUserRequest = z.infer<typeof CreateUserSchema>
 export type LoginRequest = CreateUserRequest
-export type CreateServiceRequest = z.infer<typeof CreateServiceSchema>
-export type DecryptServiceRequest = z.infer<typeof DecryptServiceSchema>
-export type UpdateServiceRequest = z.infer<typeof UpdateServiceSchema>
-export type NewServiceFormRequest = z.infer<typeof NewServiceFormSchema>
+export type CreateCredentialRequest = z.infer<typeof CreateCredentialSchema>
+export type DecryptCredentialRequest = z.infer<typeof DecryptCredentialSchema>
+export type UpdateCredentialRequest = z.infer<typeof UpdateCredentialSchema>
+export type NewCredentialFormRequest = z.infer<typeof NewCredentialFormSchema>
 export type UpdatePasswordRequest = z.infer<typeof UpdatePasswordSchema>
 export type DecryptRequest = z.infer<typeof DecryptRequestSchema>

@@ -1,31 +1,31 @@
-import { Layout } from '../componets/Layout'
-import type { ServiceMetadata } from '../lib/responseValidation'
-import { listServices } from '../services/cryptoServices'
+import { Layout } from '../components/Layout'
+import type { CredentialMetadata } from '../lib/responseValidation'
+import { listCredentials } from '../services/cryptoServices'
 import { useEffect, useState } from 'react'
-import { ServiceCard } from '../componets/ServiceCard'
+import { CredentialCard } from '../components/CredentialCard'
 
 export const Vault = () => {
-  const [services, setServices] = useState<ServiceMetadata[] | null>(null)
+  const [credentials, setCredentials] = useState<CredentialMetadata[] | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchCredentials = async () => {
       setLoading(true)
       try {
-        const services = await listServices()
-        setServices(services)
+        const credentials = await listCredentials()
+        setCredentials(credentials)
       } finally {
         setLoading(false)
       }
     }
-    fetchServices()
+    fetchCredentials()
   }, [])
 
-  const serviceList = () => {
+  const credentialList = () => {
     return (
       <div>
-        {services!.map((s) => (
-          <ServiceCard key={s.id} service={s} />
+        {credentials!.map((c) => (
+          <CredentialCard key={c.id} credential={c} />
         ))}
       </div>
     )
@@ -33,7 +33,7 @@ export const Vault = () => {
 
   return (
     <Layout>
-      {loading || !services ? <div>loading</div> : <div>{serviceList()}</div>}
+      {loading || !credentials ? <div>loading</div> : <div>{credentialList()}</div>}
     </Layout>
   )
 }

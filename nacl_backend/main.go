@@ -12,6 +12,7 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/logger"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {
@@ -39,18 +40,7 @@ func run(ctx context.Context) int {
 	}
 	log.Debug("logger succesfully initialized")
 
-	log.Debug("initializing db conn")
-	db, err := db.NewDatabase(ctx, cfg.DbString)
-	if err != nil {
-		log.Error("failed to connect to db", "error", err)
-		return 1
-	}
-	log.Debug("db conn successfully initialized")
-
 	defer func() {
-		log.Debug("closing db connection")
-		db.Close()
-		log.Debug("db connection closed")
 		log.Debug("closing logger")
 		if err := closeLogger(); err != nil {
 			fmt.Fprintf(os.Stderr, "logger shutdown with error: %v\n", err)
@@ -58,7 +48,17 @@ func run(ctx context.Context) int {
 		fmt.Fprint(os.Stderr, "logger closed successfully\n")
 	}()
 
-	s := server.NewServer(db, log, cfg)
+	pool, err := pgxpool.New(ctx, cfg.DbString)
+	if err != nil {
+		log.Error("failes to connect to db", "error", err)
+		return 1
+	}
+	defer pool.Close()
+
+	queries := db.New(pool)
+
+	s := server.NewServer(queries, log, cfg)
+
 	var serverErr error
 	go func() {
 		log.Debug("starting server in go routine")

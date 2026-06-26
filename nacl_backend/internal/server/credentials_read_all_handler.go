@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Server) HandleListServices(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleListCredentials(w http.ResponseWriter, r *http.Request) {
 	endpointReqPath := fmt.Sprintf("%s %s", r.Method, r.URL.Path)
 	userID, ok := auth.UserIDFromContext(r.Context())
 
@@ -26,7 +26,7 @@ func (s *Server) HandleListServices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.Svc.ListServices(r.Context(), userID)
+	result, err := s.Svc.ListCredentials(r.Context(), userID)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not get services for user: %w", err),
