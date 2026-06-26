@@ -25,14 +25,14 @@ func TestHandleCreateUser(t *testing.T) {
 		{"special chars", "test+user@example.com", "p@$$w0rd!", 201},
 	}
 
-	testDB := newTestDB(t)
-	defer testDB.Close()
+	pool, queries := newTestDB(t)
+	defer pool.Close()
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanupTestDB(t, testDB, "users")
+			cleanupTestDB(t, pool, "users")
 
 			body := fmt.Sprintf(`{"username": "%s", "user_password": "%s"}`, tt.username, tt.password)
 			req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(body))
@@ -45,7 +45,7 @@ func TestHandleCreateUser(t *testing.T) {
 
 			if tt.wantCode == 201 {
 				ctx := context.Background()
-				user, err := testDB.Queries().GetUserByUsername(ctx, tt.username)
+				user, err := queries.GetUserByUsername(ctx, tt.username)
 				assert.NoError(t, err)
 				assert.Equal(t, tt.username, user.Username)
 				assert.NotEmpty(t, user.PasswordHash)
@@ -56,10 +56,10 @@ func TestHandleCreateUser(t *testing.T) {
 }
 
 func TestHandleCreateUser_Duplicate(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
+	pool, queries := newTestDB(t)
+	defer pool.Close()
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	// Create first user
 	body := `{"username": "duplicate", "user_password": "password123"}`
@@ -82,10 +82,10 @@ func TestHandleCreateUser_Duplicate(t *testing.T) {
 }
 
 func TestHandleCreateUser_InvalidJSON(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
+	pool, queries := newTestDB(t)
+	defer pool.Close()
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(`{invalid json}`))
 	req.Header.Set("Content-Type", "application/json")

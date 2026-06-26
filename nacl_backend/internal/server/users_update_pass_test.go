@@ -5,14 +5,13 @@ import (
 )
 
 func TestHandleUpdateUserPassword(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users")
+	pool, queries := newTestDB(t)
+	defer pool.Close()
+	cleanupTestDB(t, pool, "users")
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	_ = server
-	_ = testDB
 
 	tests := []struct {
 		name     string

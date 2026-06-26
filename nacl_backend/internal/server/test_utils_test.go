@@ -17,24 +17,24 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/encryption"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/require"
 )
 
-func cleanupTestDB(t *testing.T, database *db.Database, tables ...string) {
+func cleanupTestDB(t *testing.T, pool *pgxpool.Pool, tables ...string) {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	truncateString := fmt.Sprintf("TRUNCATE %s CASCADE", strings.Join(tables, ", "))
-	_, err := database.Pool.Exec(ctx, truncateString)
+	_, err := pool.Exec(ctx, truncateString)
 	if err != nil {
 		t.Fatalf("failed to cleanup test database: %v", err)
 	}
-
 }
 
-func newTestDB(t *testing.T) *db.Database {
+func newTestDB(t *testing.T) (*pgxpool.Pool, db.Querier) {
 	t.Helper()
 
 	dbURL := os.Getenv("DATABASE_URL_TEST")
@@ -42,15 +42,17 @@ func newTestDB(t *testing.T) *db.Database {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	database, err := db.NewDatabase(ctx, dbURL)
+	pool, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
 
-	return database
+	queries := db.New(pool)
+
+	return pool, queries
 }
 
-func newTestServer(t *testing.T, database *db.Database) *Server {
+func newTestServer(t *testing.T, queries db.Querier) *Server {
 	t.Helper()
 
 	cfg := &config.Config{
@@ -65,7 +67,7 @@ func newTestServer(t *testing.T, database *db.Database) *Server {
 
 	s := &Server{
 		Config: cfg,
-		Svc:    service.New(database, cfg),
+		Svc:    service.New(queries, cfg),
 		Logger: logger,
 	}
 
@@ -77,7 +79,7 @@ func newTestServer(t *testing.T, database *db.Database) *Server {
 	return s
 }
 
-func createTestUser(t *testing.T, database *db.Database, username, password string) {
+func createTestUser(t *testing.T, queries db.Querier, username, password string) {
 	t.Helper()
 
 	passHash, err := auth.HashPassword(password)
@@ -95,7 +97,7 @@ func createTestUser(t *testing.T, database *db.Database, username, password stri
 	encryptedMasterKey, err := encryption.Encrypt(key, derivedKey)
 	require.NoError(t, err)
 
-	err = database.Queries().CreateUser(context.Background(), db.CreateUserParams{
+	err = queries.CreateUser(context.Background(), db.CreateUserParams{
 		Username:           username,
 		PasswordHash:       passHash,
 		MasterKeySalt:      base64.StdEncoding.EncodeToString(salt),
@@ -104,11 +106,11 @@ func createTestUser(t *testing.T, database *db.Database, username, password stri
 	require.NoError(t, err)
 }
 
-func loginTestUser(t *testing.T, database *db.Database, jwtSecret, username, password string) string {
+func loginTestUser(t *testing.T, queries db.Querier, jwtSecret, username, password string) string {
 	t.Helper()
-	createTestUser(t, database, username, password)
+	createTestUser(t, queries, username, password)
 
-	user, err := database.Queries().GetUserByUsername(context.Background(), username)
+	user, err := queries.GetUserByUsername(context.Background(), username)
 	require.NoError(t, err, "loginTestUser: user not found after creation")
 
 	token, err := auth.MakeJWT(user.ID, jwtSecret, 30*time.Minute)

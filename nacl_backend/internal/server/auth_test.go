@@ -54,14 +54,14 @@ func TestHandleLogin(t *testing.T) {
 		},
 	}
 
-	testDB := newTestDB(t)
-	defer testDB.Close()
+	pool, queries := newTestDB(t)
+	defer pool.Close()
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanupTestDB(t, testDB, "users")
+			cleanupTestDB(t, pool, "users")
 
 			passHash, err := auth.HashPassword(tt.passwordCreate)
 			if err != nil {
@@ -82,7 +82,6 @@ func TestHandleLogin(t *testing.T) {
 				EncryptedMasterKey: base64.StdEncoding.EncodeToString(key),
 			}
 
-			queries := testDB.Queries()
 			err = queries.CreateUser(context.Background(), newUserData)
 			if err != nil {
 				t.Fatalf("insert test failed: %v", err)

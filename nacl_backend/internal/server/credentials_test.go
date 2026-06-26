@@ -17,16 +17,16 @@ import (
 )
 
 func TestHandleCreateCredential(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users")
+	pool, queries := newTestDB(t)
+	defer pool.Close()
+	cleanupTestDB(t, pool, "users")
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	testUser := "test_credentials_user"
 	testPass := "test_credentials_pass"
 
-	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
+	token := loginTestUser(t, queries, "test-secret", testUser, testPass)
 
 	tests := []struct {
 		name                string
@@ -98,7 +98,7 @@ func TestHandleCreateCredential(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cleanupTestDB(t, testDB, "credentials")
+			cleanupTestDB(t, pool, "credentials")
 
 			serviceRequest := dto.CreateCredentialRequest{
 				Service:             tt.service,
@@ -126,16 +126,16 @@ func TestHandleCreateCredential(t *testing.T) {
 }
 
 func TestHandleListCredentials(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users", "credentials")
+	pool, queries := newTestDB(t)
+	defer pool.Close()
+	cleanupTestDB(t, pool, "users", "credentials")
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	testUser := "test_credentials_user"
 	testPass := "test_credentials_pass"
 
-	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
+	token := loginTestUser(t, queries, "test-secret", testUser, testPass)
 
 	services := []struct {
 		service         string
@@ -292,16 +292,16 @@ func TestHandleListCredentials(t *testing.T) {
 }
 
 func TestHandleDecryptCredentialByID(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users", "credentials")
+	pool, queries := newTestDB(t)
+	defer pool.Close()
+	cleanupTestDB(t, pool, "users", "credentials")
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	testUser := "test_credentials_user"
 	testPass := "test_credentials_pass"
 
-	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
+	token := loginTestUser(t, queries, "test-secret", testUser, testPass)
 
 	// create service
 	serviceRequest := dto.CreateCredentialRequest{
@@ -398,16 +398,16 @@ func TestHandleDecryptCredentialByID(t *testing.T) {
 }
 
 func TestHandleUpdateCredentialPassword(t *testing.T) {
-	testDB := newTestDB(t)
-	defer testDB.Close()
-	cleanupTestDB(t, testDB, "users", "credentials")
+	pool, queries := newTestDB(t)
+	defer pool.Close()
+	cleanupTestDB(t, pool, "users", "credentials")
 
-	server := newTestServer(t, testDB)
+	server := newTestServer(t, queries)
 
 	testUser := "test_credentials_user"
 	testPass := "test_credentials_pass"
 
-	token := loginTestUser(t, testDB, "test-secret", testUser, testPass)
+	token := loginTestUser(t, queries, "test-secret", testUser, testPass)
 
 	// create service
 	serviceRequest := dto.CreateCredentialRequest{
