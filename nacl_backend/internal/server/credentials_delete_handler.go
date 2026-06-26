@@ -8,7 +8,7 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/auth"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
-	servicesvc "github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
+	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -31,32 +31,16 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 	}
 
 	req, err := dto.DecodeAndValidate[*dto.DeleteCredentialsRequest](r.Body)
-
-	userData, err := s.Svc.GetUserData(r.Context(), userID)
 	if err != nil {
-		err := apperr.WithAttrs(
-			fmt.Errorf("could not get user data: %w", err),
+		err = apperr.WithAttrs(
+			fmt.Errorf("could not process payload: %w", err),
 			"userID", userID.String(),
 			"endpoint", endpointReqPath,
 		)
 		s.RespondWithError(
-			w, http.StatusInternalServerError,
-			"could not delete credentials",
-			err,
-		)
-		return
-	}
-
-	match, err := auth.CheckPasswordHash(req.UserPassword, userData.PasswordHash)
-	if !match || err != nil {
-		err := apperr.WithAttrs(
-			fmt.Errorf("invalid credentials: %w", err),
-			"userID", userID.String(),
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(
-			w, http.StatusForbidden,
-			"could not delete credentials",
+			w,
+			http.StatusBadRequest,
+			"could not retrieve credentials",
 			err,
 		)
 		return
@@ -78,29 +62,27 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	credential, err := s.Svc.GetCredentialByID(r.Context(), serviceID)
+	serviceName, err := s.Svc.DeleteCredentials(r.Context(), userID, serviceID, req.UserPassword)
 	if err != nil {
-		if errors.Is(err, servicesvc.ErrCredentialNotFound) {
+		if errors.Is(err, service.ErrCredentialNotFound) {
 			s.RespondWithJSON(w, http.StatusNoContent, nil)
 			return
 		}
-		err = apperr.WithAttrs(
-			fmt.Errorf("could not get credential: %w", err),
-			"userID", userID,
-			"endpoint", endpointReqPath,
-		)
-		s.RespondWithError(w, http.StatusInternalServerError,
-			"could not delete credentials", err)
-		return
-	}
 
-	if credential.UserID != userID {
-		s.RespondWithError(w, http.StatusForbidden, "not authorized", nil)
-		return
-	}
+		if errors.Is(err, service.ErrUnauthorized) {
+			err := apperr.WithAttrs(
+				fmt.Errorf("user not authorized: %w", err),
+				"userID", userID.String(),
+				"endpoint", endpointReqPath,
+			)
+			s.RespondWithError(
+				w, http.StatusForbidden,
+				"could not delete credentials",
+				err,
+			)
+			return
+		}
 
-	serviceName, err := s.Svc.DeleteCredentials(r.Context(), serviceID)
-	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not delete credentials from db: %w", err),
 			"userID", userID.String(),
@@ -115,9 +97,9 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), "delete", serviceName, userID, serviceID)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeDelete, serviceName, userID, serviceID)
 	if err != nil {
-		s.Logger.Error("could not save operation", "type", "delete", "service", serviceName)
+		s.Logger.Error("could not save operation", "type", service.TypeDelete.String(), "service", serviceName)
 	}
 
 	s.RespondWithJSON(w, http.StatusNoContent, nil)

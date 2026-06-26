@@ -16,7 +16,7 @@ import (
 )
 
 func (svc *Service) ListCredentials(ctx context.Context, userID uuid.UUID) ([]dto.CredentialMetadataResponse, error) {
-	credentials, err := svc.Db.Queries().GetAllCredentialsForUserId(ctx, userID)
+	credentials, err := svc.Queries.GetAllCredentialsForUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (svc *Service) ListCredentials(ctx context.Context, userID uuid.UUID) ([]dt
 }
 
 func (svc *Service) CreateCredential(ctx context.Context, userID uuid.UUID, req *dto.CreateCredentialRequest) (dto.CredentialMetadataResponse, error) {
-	user, err := svc.Db.Queries().GetUserById(ctx, userID)
+	user, err := svc.Queries.GetUserById(ctx, userID)
 	if err != nil {
 		return dto.CredentialMetadataResponse{}, ErrUserNotFound
 	}
@@ -50,7 +50,7 @@ func (svc *Service) CreateCredential(ctx context.Context, userID uuid.UUID, req 
 		return dto.CredentialMetadataResponse{}, ErrInvalidCredentials
 	}
 
-	masterKey, err := decryptMasterKey(req.UserPassword, &user)
+	masterKey, err := decryptMasterKey(req.UserPassword, user.MasterKeySalt, user.EncryptedMasterKey)
 	if err != nil {
 		return dto.CredentialMetadataResponse{}, err
 	}
@@ -65,7 +65,7 @@ func (svc *Service) CreateCredential(ctx context.Context, userID uuid.UUID, req 
 		return dto.CredentialMetadataResponse{}, fmt.Errorf("could not encrypt password: %w", err)
 	}
 
-	created, err := svc.Db.Queries().CreateCredential(ctx, db.CreateCredentialParams{
+	created, err := svc.Queries.CreateCredential(ctx, db.CreateCredentialParams{
 		Service:                  req.Service,
 		EncryptedServiceUsername: encryptedUsername,
 		EncryptedPassword:        encryptedPassword,
@@ -90,8 +90,8 @@ func (svc *Service) CreateCredential(ctx context.Context, userID uuid.UUID, req 
 	}, nil
 }
 
-func decryptMasterKey(password string, user *db.User) ([]byte, error) {
-	decodedSalt, err := base64.StdEncoding.DecodeString(user.MasterKeySalt)
+func decryptMasterKey(password string, masterKeySalt string, encryptedKey string) ([]byte, error) {
+	decodedSalt, err := base64.StdEncoding.DecodeString(masterKeySalt)
 	if err != nil {
 		return nil, fmt.Errorf("could not decode master key salt: %w", err)
 	}
@@ -101,7 +101,7 @@ func decryptMasterKey(password string, user *db.User) ([]byte, error) {
 		return nil, fmt.Errorf("could not derive key: %w", err)
 	}
 
-	decodedMasterKey, err := base64.StdEncoding.DecodeString(user.EncryptedMasterKey)
+	decodedMasterKey, err := base64.StdEncoding.DecodeString(encryptedKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not decode encrypted master key: %w", err)
 	}
@@ -115,7 +115,7 @@ func decryptMasterKey(password string, user *db.User) ([]byte, error) {
 }
 
 func (svc *Service) DecryptCredentialByID(ctx context.Context, userID, credentialID uuid.UUID, password string) (dto.DecryptedCredentialResponse, error) {
-	user, err := svc.Db.Queries().GetUserById(ctx, userID)
+	user, err := svc.Queries.GetUserById(ctx, userID)
 	if err != nil {
 		return dto.DecryptedCredentialResponse{}, ErrUserNotFound
 	}
@@ -125,7 +125,7 @@ func (svc *Service) DecryptCredentialByID(ctx context.Context, userID, credentia
 		return dto.DecryptedCredentialResponse{}, ErrInvalidCredentials
 	}
 
-	credential, err := svc.Db.Queries().GetCredentialById(ctx, credentialID)
+	credential, err := svc.Queries.GetCredentialById(ctx, credentialID)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return dto.DecryptedCredentialResponse{}, ErrCredentialNotFound
@@ -133,7 +133,7 @@ func (svc *Service) DecryptCredentialByID(ctx context.Context, userID, credentia
 		return dto.DecryptedCredentialResponse{}, err
 	}
 
-	masterKey, err := decryptMasterKey(password, &user)
+	masterKey, err := decryptMasterKey(password, user.MasterKeySalt, user.EncryptedMasterKey)
 	if err != nil {
 		return dto.DecryptedCredentialResponse{}, err
 	}
@@ -165,7 +165,7 @@ func (svc *Service) DecryptCredentialByID(ctx context.Context, userID, credentia
 }
 
 func (svc *Service) UpdateCredentialPassword(ctx context.Context, userID, credentialID uuid.UUID, req *dto.UpdateCredentialRequest) (dto.CredentialMetadataResponse, error) {
-	user, err := svc.Db.Queries().GetUserById(ctx, userID)
+	user, err := svc.Queries.GetUserById(ctx, userID)
 	if err != nil {
 		return dto.CredentialMetadataResponse{}, ErrUserNotFound
 	}
@@ -175,7 +175,7 @@ func (svc *Service) UpdateCredentialPassword(ctx context.Context, userID, creden
 		return dto.CredentialMetadataResponse{}, ErrInvalidCredentials
 	}
 
-	masterKey, err := decryptMasterKey(req.UserPassword, &user)
+	masterKey, err := decryptMasterKey(req.UserPassword, user.MasterKeySalt, user.EncryptedMasterKey)
 	if err != nil {
 		return dto.CredentialMetadataResponse{}, err
 	}
@@ -185,7 +185,7 @@ func (svc *Service) UpdateCredentialPassword(ctx context.Context, userID, creden
 		return dto.CredentialMetadataResponse{}, fmt.Errorf("could not encrypt new password: %w", err)
 	}
 
-	updated, err := svc.Db.Queries().UpdateCredential(ctx, db.UpdateCredentialParams{
+	updated, err := svc.Queries.UpdateCredential(ctx, db.UpdateCredentialParams{
 		EncryptedPassword:   encryptedNewPass,
 		EncryptionAlgorithm: req.EncryptionAlgorithm,
 		ID:                  credentialID,
@@ -208,23 +208,25 @@ func (svc *Service) UpdateCredentialPassword(ctx context.Context, userID, creden
 	}, nil
 }
 
-func (svc *Service) DeleteCredentials(ctx context.Context, credentialID uuid.UUID) (string, error) {
-	service, err := svc.Db.Queries().DeleteCredentialById(ctx, credentialID)
+func (svc *Service) DeleteCredentials(ctx context.Context, credentialID, userID uuid.UUID, password string) (string, error) {
+	match, err := svc.VerifyUserPassword(ctx, userID, password)
+	if !match || err != nil {
+		return "", ErrUnauthorized
+	}
+
+	credential, err := svc.Queries.GetCredentialById(ctx, credentialID)
+	if err != nil {
+		return "", ErrCredentialNotFound
+	}
+
+	if userID != credential.UserID {
+		return "", ErrUnauthorized
+	}
+
+	service, err := svc.Queries.DeleteCredentialById(ctx, credentialID)
 	if err != nil {
 		return "", err
 	}
 
 	return service, nil
-}
-func (svc *Service) GetCredentialByID(ctx context.Context, credentialID uuid.UUID) (db.Credential, error) {
-	credential, err := svc.Db.Queries().GetCredentialById(ctx, credentialID)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return db.Credential{}, ErrCredentialNotFound
-		}
-		return db.Credential{}, err
-	}
-
-	return credential, nil
-
 }

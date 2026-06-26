@@ -23,7 +23,7 @@ type Server struct {
 }
 
 func NewServer(
-	db *db.Database,
+	db db.Querier,
 	logger *slog.Logger,
 	config *config.Config,
 ) *Server {

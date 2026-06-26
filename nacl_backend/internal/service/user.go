@@ -38,7 +38,7 @@ func (svc *Service) CreateUser(ctx context.Context, username, password string) e
 		return err
 	}
 
-	err = svc.Db.Queries().CreateUser(ctx, db.CreateUserParams{
+	err = svc.Queries.CreateUser(ctx, db.CreateUserParams{
 		Username:           username,
 		PasswordHash:       hashedPassword,
 		MasterKeySalt:      base64.StdEncoding.EncodeToString(salt),
@@ -52,7 +52,7 @@ func (svc *Service) CreateUser(ctx context.Context, username, password string) e
 }
 
 func (svc *Service) Login(ctx context.Context, username, password string) (dto.LoginResponse, error) {
-	user, err := svc.Db.Queries().GetUserByUsername(ctx, username)
+	user, err := svc.Queries.GetUserByUsername(ctx, username)
 	if err != nil {
 		return dto.LoginResponse{}, ErrInvalidCredentials
 	}
@@ -74,7 +74,7 @@ func (svc *Service) Login(ctx context.Context, username, password string) (dto.L
 }
 
 func (svc *Service) UpdateUserPassword(ctx context.Context, userID uuid.UUID, oldPass, newPass string) error {
-	user, err := svc.Db.Queries().GetUserById(ctx, userID)
+	user, err := svc.Queries.GetUserById(ctx, userID)
 	if err != nil {
 		return ErrUserNotFound
 	}
@@ -83,8 +83,7 @@ func (svc *Service) UpdateUserPassword(ctx context.Context, userID uuid.UUID, ol
 	if err != nil || !match {
 		return ErrInvalidCredentials
 	}
-
-	masterKey, err := decryptMasterKey(oldPass, &user)
+	masterKey, err := decryptMasterKey(oldPass, user.MasterKeySalt, user.EncryptedMasterKey)
 	if err != nil {
 		return err
 	}
@@ -116,7 +115,7 @@ func (svc *Service) UpdateUserPassword(ctx context.Context, userID uuid.UUID, ol
 		ID:                 userID,
 	}
 
-	err = svc.Db.Queries().UpdateUserPassHashAndKey(ctx, newData)
+	err = svc.Queries.UpdateUserPassHashAndKey(ctx, newData)
 	if err != nil {
 		return err
 	}
@@ -124,11 +123,16 @@ func (svc *Service) UpdateUserPassword(ctx context.Context, userID uuid.UUID, ol
 	return nil
 }
 
-func (svc *Service) GetUserData(ctx context.Context, userID uuid.UUID) (db.User, error) {
-	user, err := svc.Db.Queries().GetUserById(ctx, userID)
+func (svc *Service) VerifyUserPassword(ctx context.Context, userID uuid.UUID, password string) (bool, error) {
+	user, err := svc.Queries.GetUserById(ctx, userID)
 	if err != nil {
-		return db.User{}, err
+		return false, ErrUserNotFound
 	}
 
-	return user, nil
+	match, err := auth.CheckPasswordHash(password, user.PasswordHash)
+	if err != nil || !match {
+		return false, ErrInvalidCredentials
+	}
+
+	return true, nil
 }
