@@ -1,15 +1,15 @@
 import { useForm } from 'react-hook-form'
-import { Layout } from '../componets/Layout'
+import { Layout } from '../components/Layout'
 import {
-  NewServiceFormSchema,
-  type NewServiceFormRequest
+  NewCredentialFormSchema,
+  type NewCredentialFormRequest
 } from '../lib/requestValidation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { createService } from '../services/cryptoServices'
+import { createCredential } from '../services/cryptoServices'
 import { useToast } from '../context/ToastContext'
 
 //TODO: styling and encryption information below form
-export const NewService = () => {
+export const NewCredential = () => {
   const { showToast } = useToast()
   const {
     reset,
@@ -17,13 +17,13 @@ export const NewService = () => {
     handleSubmit,
     setError,
     formState: { errors, isSubmitting }
-  } = useForm<NewServiceFormRequest>({
-    resolver: zodResolver(NewServiceFormSchema)
+  } = useForm<NewCredentialFormRequest>({
+    resolver: zodResolver(NewCredentialFormSchema)
   })
 
-  const onSubmit = async (data: NewServiceFormRequest) => {
+  const onSubmit = async (data: NewCredentialFormRequest) => {
     try {
-      await createService(data)
+      await createCredential(data)
       showToast('Credentials encrypted and saved!', 'success')
       reset()
     } catch {
@@ -33,8 +33,8 @@ export const NewService = () => {
 
   return (
     <Layout>
-      <h2>New Service</h2>
-      <div>Hello from NewService</div>
+      <h2>New Credential</h2>
+      <div>Hello from NewCredential</div>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label htmlFor='service'>Service</label>

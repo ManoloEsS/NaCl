@@ -3,7 +3,7 @@ INSERT INTO operations (
     user_id,
     op_type,
     service,
-    service_id
+    credential_id
 )
 VALUES ($1, $2, $3, $4);
 

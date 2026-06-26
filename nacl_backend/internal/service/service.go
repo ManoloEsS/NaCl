@@ -6,13 +6,13 @@ import (
 )
 
 type Service struct {
-	Db     *db.Database
-	Config *config.Config
+	Queries db.Querier
+	Config  *config.Config
 }
 
-func New(database *db.Database, cfg *config.Config) *Service {
+func New(database db.Querier, cfg *config.Config) *Service {
 	return &Service{
-		Db:     database,
-		Config: cfg,
+		Queries: database,
+		Config:  cfg,
 	}
 }

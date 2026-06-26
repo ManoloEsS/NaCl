@@ -9,18 +9,32 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (svc *Service) SaveOperation(ctx context.Context, opType, service string, userID, serviceID uuid.UUID) error {
+type OperationType string
+
+var (
+	TypeCreate  OperationType = "create"
+	TypeUpdate  OperationType = "update"
+	TypeDelete  OperationType = "delete"
+	TypeDecrypt OperationType = "decrypt"
+	TypeLogin   OperationType = "login"
+)
+
+func (ot OperationType) String() string {
+	return string(ot)
+}
+
+func (svc *Service) SaveOperation(ctx context.Context, opType OperationType, service string, userID, credentialID uuid.UUID) error {
 	operation := db.CreateOperationParams{
 		UserID:  userID,
-		OpType:  opType,
+		OpType:  opType.String(),
 		Service: service,
-		ServiceID: pgtype.UUID{
-			Bytes: [16]byte(serviceID),
-			Valid: serviceID != uuid.Nil,
+		CredentialID: pgtype.UUID{
+			Bytes: [16]byte(credentialID),
+			Valid: credentialID != uuid.Nil,
 		},
 	}
 
-	err := svc.Db.Queries().CreateOperation(ctx, operation)
+	err := svc.Queries.CreateOperation(ctx, operation)
 	if err != nil {
 		return err
 	}
@@ -29,23 +43,23 @@ func (svc *Service) SaveOperation(ctx context.Context, opType, service string, u
 }
 
 func (svc *Service) ListOpsforUserID(ctx context.Context, userID uuid.UUID) ([]dto.OperationDataResponse, error) {
-	ops, err := svc.Db.Queries().GetOperationsForUserId(ctx, userID)
+	ops, err := svc.Queries.GetOperationsForUserId(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	parsedOps := make([]dto.OperationDataResponse, len(ops))
 	for i, op := range ops {
-		parsedSvcID, err := uuid.FromBytes(op.ServiceID.Bytes[:])
+		parsedSvcID, err := uuid.FromBytes(op.CredentialID.Bytes[:])
 		if err != nil {
 			parsedSvcID = uuid.Nil
 		}
 		operation := dto.OperationDataResponse{
-			ID:        op.ID,
-			OpType:    op.OpType,
-			Service:   op.Service,
-			ServiceID: parsedSvcID,
-			CreatedAt: op.CreatedAt.Time,
+			ID:           op.ID,
+			OpType:       op.OpType,
+			Service:      op.Service,
+			CredentialID: parsedSvcID,
+			CreatedAt:    op.CreatedAt.Time,
 		}
 		parsedOps[i] = operation
 	}

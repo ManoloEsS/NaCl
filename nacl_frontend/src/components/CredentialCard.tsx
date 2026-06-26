@@ -1,18 +1,18 @@
 import { useState, type ChangeEvent } from 'react'
 import type {
-  ServiceCredentials,
-  ServiceMetadata
+  DecryptedCredentials,
+  CredentialMetadata
 } from '../lib/responseValidation'
-import { decryptService } from '../services/cryptoServices'
+import { decryptCredential } from '../services/cryptoServices'
 import { useToast } from '../context/ToastContext'
 
-interface ServiceProps {
-  service: ServiceMetadata
+interface CredentialProps {
+  credential: CredentialMetadata
 }
 
-export const ServiceCard = ({ service }: ServiceProps) => {
+export const CredentialCard = ({ credential }: CredentialProps) => {
   const { showToast } = useToast()
-  const serviceStyle = {
+  const credentialStyle = {
     paddingTop: 10,
     paddingLeft: 2,
     border: 'solid',
@@ -20,14 +20,14 @@ export const ServiceCard = ({ service }: ServiceProps) => {
     marginBottom: 5
   }
   const [show, setShow] = useState(false)
-  const [decrypted, setDecrypted] = useState<ServiceCredentials | null>(null)
+  const [decrypted, setDecrypted] = useState<DecryptedCredentials | null>(null)
   const [userPass, setUserPass] = useState('')
 
   const handleDecrypt = async () => {
     try {
-      const decryptedSvc = await decryptService({
+      const decryptedSvc = await decryptCredential({
         user_password: userPass,
-        serviceID: service.id
+        credentialID: credential.id
       })
       setDecrypted(decryptedSvc)
       setShow(true)
@@ -55,10 +55,10 @@ export const ServiceCard = ({ service }: ServiceProps) => {
 
   return (
     <div>
-      <div style={serviceStyle}>
-        <div>Service: {service.service}</div>
-        <div>Encryption Algorithm: {service.encryption_algorithm}</div>
-        <div>Description: {service.description ? service.description : ''}</div>
+      <div style={credentialStyle}>
+        <div>Service: {credential.service}</div>
+        <div>Encryption Algorithm: {credential.encryption_algorithm}</div>
+        <div>Description: {credential.description ? credential.description : ''}</div>
         {show ? (
           <div>
             <div>Username: {decrypted?.service_username}</div>

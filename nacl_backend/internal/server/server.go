@@ -23,7 +23,7 @@ type Server struct {
 }
 
 func NewServer(
-	db *db.Database,
+	db db.Querier,
 	logger *slog.Logger,
 	config *config.Config,
 ) *Server {
@@ -63,13 +63,15 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 	r.Post("/api/login", s.HandleLogin)
 
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Post("/api/services", s.HandleCreateService)
+		Post("/api/credentials", s.HandleCreateCredential)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Get("/api/services", s.HandleListServices)
+		Get("/api/credentials", s.HandleListCredentials)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Post("/api/services/{id}/credentials", s.HandleDecryptServiceByID)
+		Post("/api/credentials/{id}/decrypt", s.HandleDecryptCredentialByID)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Patch("/api/services/{id}", s.HandleUpdateServicePassword)
+		Patch("/api/credentials/{id}", s.HandleUpdateCredentialPassword)
+	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
+		Delete("/api/credentials/{id}", s.HandleDeleteCredential)
 
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
 		Get("/api/operations", s.HandleListOpsforUserID)

@@ -28,9 +28,9 @@ export const LoginPage = () => {
       const userData = await login(data)
       navigate(userData ? '/dash' : '/login', { replace: true })
     } catch {
+      setFocus('username')
       reset()
       setError('root', { message: 'Invalid email or password' })
-      setFocus('username')
     }
   }
 

@@ -1,5 +1,4 @@
-import { zodResolver } from '@hookform/resolvers/zod/src/zod.js'
-import { Layout } from '../componets/Layout'
+import { Layout } from '../components/Layout'
 import { useToast } from '../context/ToastContext'
 import {
   UpdatePasswordSchema,
@@ -10,7 +9,8 @@ import { updatePassword } from '../services/authServices'
 import { OperationData } from '../lib/responseValidation'
 import { useEffect, useState } from 'react'
 import { listOperations } from '../services/operationsServices'
-import { OperationCard } from '../componets/OperationCard'
+import { OperationCard } from '../components/OperationCard'
+import { zodResolver } from '@hookform/resolvers/zod'
 
 export const Account = () => {
   const [operations, setOperations] = useState<OperationData[] | null>(null)
@@ -67,7 +67,7 @@ export const Account = () => {
         {operations!
           .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
           .map((o) => (
-            <OperationCard key={o.service_id} operation={o} />
+            <OperationCard key={o.credential_id} operation={o} />
           ))}
       </div>
     )

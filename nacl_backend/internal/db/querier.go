@@ -11,18 +11,18 @@ import (
 )
 
 type Querier interface {
+	CreateCredential(ctx context.Context, arg CreateCredentialParams) (CreateCredentialRow, error)
 	CreateOperation(ctx context.Context, arg CreateOperationParams) error
-	CreateService(ctx context.Context, arg CreateServiceParams) (CreateServiceRow, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) error
-	DeleteServiceById(ctx context.Context, arg DeleteServiceByIdParams) error
+	DeleteCredentialById(ctx context.Context, id uuid.UUID) (string, error)
 	DeleteUser(ctx context.Context, id uuid.UUID) error
-	GetAllServicesForUserId(ctx context.Context, userID uuid.UUID) ([]GetAllServicesForUserIdRow, error)
+	GetAllCredentialsForUserId(ctx context.Context, userID uuid.UUID) ([]GetAllCredentialsForUserIdRow, error)
+	GetCredentialById(ctx context.Context, id uuid.UUID) (Credential, error)
 	GetOperationsForService(ctx context.Context, arg GetOperationsForServiceParams) ([]Operation, error)
 	GetOperationsForUserId(ctx context.Context, userID uuid.UUID) ([]Operation, error)
-	GetServiceById(ctx context.Context, arg GetServiceByIdParams) (Service, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByUsername(ctx context.Context, username string) (User, error)
-	UpdateService(ctx context.Context, arg UpdateServiceParams) (UpdateServiceRow, error)
+	UpdateCredential(ctx context.Context, arg UpdateCredentialParams) (UpdateCredentialRow, error)
 	UpdateUserKey(ctx context.Context, arg UpdateUserKeyParams) error
 	UpdateUserPassHashAndKey(ctx context.Context, arg UpdateUserPassHashAndKeyParams) error
 	UpdateUserPasswordHash(ctx context.Context, arg UpdateUserPasswordHashParams) (User, error)
