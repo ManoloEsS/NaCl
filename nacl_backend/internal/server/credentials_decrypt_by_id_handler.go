@@ -115,9 +115,9 @@ func (s *Server) HandleDecryptCredentialByID(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), "decrypt", result.Service, userID, credentialID)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeDecrypt, result.Service, userID, credentialID)
 	if err != nil {
-		s.Logger.Error("could not save operation", "type", "decrypt", "service", result.Service)
+		s.Logger.Error("could not save operation", "type", service.TypeDecrypt.String(), "service", result.Service)
 	}
 	s.RespondWithJSON(w, http.StatusOK, result)
 }

@@ -98,9 +98,9 @@ func (s *Server) HandleUpdateCredentialPassword(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), "update", result.Service, userID, credentialID)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeUpdate, result.Service, userID, credentialID)
 	if err != nil {
-		s.Logger.Error("could not save operation", "type", "update", "service", result.Service)
+		s.Logger.Error("could not save operation", "type", service.TypeUpdate.String(), "service", result.Service)
 	}
 
 	s.RespondWithJSON(w, http.StatusOK, result)
