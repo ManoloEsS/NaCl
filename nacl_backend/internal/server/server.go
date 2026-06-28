@@ -53,7 +53,7 @@ func NewServer(
 }
 
 func (s *Server) RegisterRoutes(r chi.Router) {
-	assetsRoot, _ := fs.Sub(s.StaticFS, "dist/assets")
+	assetsRoot, _ := fs.Sub(s.StaticFS, "static/assets")
 
 	r.Use(
 		middleware.RequestLogger(s.Logger),

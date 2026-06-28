@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Server) HandleIndex(w http.ResponseWriter, r *http.Request) {
-	root, _ := fs.Sub(s.StaticFS, "dist")
+	root, _ := fs.Sub(s.StaticFS, "static")
 	index, err := root.Open("index.html")
 	if err != nil {
 		http.Error(w, "Not Found", http.StatusNotFound)
