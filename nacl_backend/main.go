@@ -12,6 +12,7 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/db"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/logger"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/server"
+	"github.com/ManoloEsS/NaCl/nacl_backend/sql/migrations"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -50,7 +51,7 @@ func run(ctx context.Context) int {
 
 	pool, err := pgxpool.New(ctx, cfg.DbString)
 	if err != nil {
-		log.Error("failes to connect to db", "error", err)
+		log.Error("failed to connect to db", "error", err)
 		return 1
 	}
 	defer pool.Close()
@@ -58,6 +59,11 @@ func run(ctx context.Context) int {
 	queries := db.New(pool)
 
 	s := server.NewServer(queries, log, cfg, DistFS)
+
+	if err := migrations.RunMigrations(pool); err != nil {
+		log.Error("goose migrations failed", "error", err)
+		return 1
+	}
 
 	var serverErr error
 	go func() {
