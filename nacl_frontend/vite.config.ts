@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
-  build: { outDir: '../nacl_backend/dist' },
+  build: { outDir: '../nacl_backend/static' },
   server: {
     proxy: {
       '/api/': {
