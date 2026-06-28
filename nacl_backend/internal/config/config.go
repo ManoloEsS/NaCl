@@ -46,7 +46,7 @@ func NewConfig() (*Config, error) {
 
 	dbString = os.Getenv("DATABASE_URL")
 	if dbString == "" {
-		return nil, fmt.Errorf("no database string found: exiting with error\n")
+		return nil, fmt.Errorf("no database string found: exiting with error")
 	}
 
 	cfg := &Config{
