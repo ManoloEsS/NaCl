@@ -8,7 +8,6 @@ import (
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/apperr"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/dto"
 	"github.com/ManoloEsS/NaCl/nacl_backend/internal/service"
-	"github.com/google/uuid"
 )
 
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +41,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), service.TypeLogin, "nil", result.ID, uuid.Nil)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeLogin, "nil", result.ID)
 	if err != nil {
 		s.Logger.Error("could not save operation", "type", service.TypeLogin.String(), "error", err)
 	}
