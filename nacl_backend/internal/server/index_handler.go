@@ -16,5 +16,5 @@ func (s *Server) HandleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 	defer index.Close()
 	w.Header().Set("Content-Type", "text/html")
-	io.Copy(w, index)
+	_, _ = io.Copy(w, index)
 }
