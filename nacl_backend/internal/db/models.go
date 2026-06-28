@@ -22,12 +22,11 @@ type Credential struct {
 }
 
 type Operation struct {
-	ID           uuid.UUID        `json:"id"`
-	UserID       uuid.UUID        `json:"user_id"`
-	OpType       string           `json:"op_type"`
-	Service      string           `json:"service"`
-	CredentialID pgtype.UUID      `json:"credential_id"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	ID        uuid.UUID        `json:"id"`
+	UserID    uuid.UUID        `json:"user_id"`
+	OpType    string           `json:"op_type"`
+	Service   string           `json:"service"`
+	CreatedAt pgtype.Timestamp `json:"created_at"`
 }
 
 type User struct {

@@ -9,38 +9,30 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createOperation = `-- name: CreateOperation :exec
 INSERT INTO operations (
     user_id,
     op_type,
-    service,
-    credential_id
+    service
 )
-VALUES ($1, $2, $3, $4)
+VALUES ($1, $2, $3)
 `
 
 type CreateOperationParams struct {
-	UserID       uuid.UUID   `json:"user_id"`
-	OpType       string      `json:"op_type"`
-	Service      string      `json:"service"`
-	CredentialID pgtype.UUID `json:"credential_id"`
+	UserID  uuid.UUID `json:"user_id"`
+	OpType  string    `json:"op_type"`
+	Service string    `json:"service"`
 }
 
 func (q *Queries) CreateOperation(ctx context.Context, arg CreateOperationParams) error {
-	_, err := q.db.Exec(ctx, createOperation,
-		arg.UserID,
-		arg.OpType,
-		arg.Service,
-		arg.CredentialID,
-	)
+	_, err := q.db.Exec(ctx, createOperation, arg.UserID, arg.OpType, arg.Service)
 	return err
 }
 
 const getOperationsForService = `-- name: GetOperationsForService :many
-SELECT id, user_id, op_type, service, credential_id, created_at
+SELECT id, user_id, op_type, service, created_at
 FROM operations
 WHERE service = $1 AND user_id = $2
 `
@@ -64,7 +56,6 @@ func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperations
 			&i.UserID,
 			&i.OpType,
 			&i.Service,
-			&i.CredentialID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -78,7 +69,7 @@ func (q *Queries) GetOperationsForService(ctx context.Context, arg GetOperations
 }
 
 const getOperationsForUserId = `-- name: GetOperationsForUserId :many
-SELECT id, user_id, op_type, service, credential_id, created_at
+SELECT id, user_id, op_type, service, created_at
 FROM operations
 WHERE user_id = $1
 `
@@ -97,7 +88,6 @@ func (q *Queries) GetOperationsForUserId(ctx context.Context, userID uuid.UUID) 
 			&i.UserID,
 			&i.OpType,
 			&i.Service,
-			&i.CredentialID,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err

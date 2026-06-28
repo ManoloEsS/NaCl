@@ -69,7 +69,7 @@ type UpdatePasswordRequest struct {
 	NewPassword  string `json:"new_password"`
 }
 
-type DeleteCredentialsRequest struct {
+type DeleteCredentialRequest struct {
 	UserPassword string `json:"user_password"`
 }
 
@@ -155,7 +155,7 @@ func (r *UpdateCredentialRequest) Validate() error {
 	return nil
 }
 
-func (d *DeleteCredentialsRequest) Validate() error {
+func (d *DeleteCredentialRequest) Validate() error {
 	if strings.TrimSpace(d.UserPassword) == "" {
 		return fmt.Errorf("user password is required")
 	}
@@ -197,9 +197,8 @@ type DecryptedCredentialResponse struct {
 }
 
 type OperationDataResponse struct {
-	ID           uuid.UUID `json:"id"`
-	OpType       string    `json:"op_type"`
-	Service      string    `json:"service"`
-	CredentialID uuid.UUID `json:"credential_id"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	OpType    string    `json:"op_type"`
+	Service   string    `json:"service"`
+	CreatedAt time.Time `json:"created_at"`
 }
