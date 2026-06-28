@@ -19,20 +19,30 @@ func InitializeLogger(logFile string) (*slog.Logger, CloseLogger, error) {
 
 	file, err := os.OpenFile(logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0o644)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open log file: %w", err)
+		fmt.Fprintf(os.Stderr, "could not open file, defaulting to stderr")
+		file = os.Stderr
 	}
 
 	bufferedWriter := bufio.NewWriterSize(file, 8192)
 	closeLogger := func() error {
-		err := bufferedWriter.Flush()
-		if err != nil {
-			return err
-		}
-		err = file.Close()
-		if err != nil {
-			return err
+		if file != os.Stderr {
+			err := bufferedWriter.Flush()
+			if err != nil {
+				return err
+			}
+			err = file.Close()
+			if err != nil {
+				return err
+			}
 		}
 		return nil
+	}
+
+	if file == os.Stderr {
+		return slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level:       slog.LevelInfo,
+			ReplaceAttr: replaceAttr,
+		})), closeLogger, nil
 	}
 
 	infoHandler := slog.NewJSONHandler(bufferedWriter, &slog.HandlerOptions{
