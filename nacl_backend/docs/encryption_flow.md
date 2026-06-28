@@ -109,7 +109,7 @@ Casting `[]byte(string)` on a base64-encoded value produces the wrong length and
 |----------|-------|
 | **Purpose** | Authenticate user + derive encryption key |
 | **Provided by** | User at registration and login |
-| **Stored as** | Bcrypt hash in `users.passwordHash` |
+| **Stored as** | Argon2id hash in `users.passwordHash` |
 | **Example** | `"MyMasterPassword123!"` |
 | **Frequency** | Entered once per session |
 | **Used for** | - Account login<br>- Deriving key to decrypt master key |
@@ -155,8 +155,8 @@ Step 2: Derive encryption key from login password
   ├─ derivedKey = Argon2id(loginPassword, salt)
   │   → 32-byte key derived from password + salt
   │
-  └─ passwordHash = bcrypt(loginPassword)
-      → "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
+  └─ passwordHash = argon2id.hash(loginPassword)
+      → "$argon2id$v=19$m=65536,t=3,p=4$<salt>$<hash>"
 
 Step 3: Encrypt master key with derived key
   └─ encryptedMasterKey = AES-GCM-encrypt(masterKey, derivedKey)
@@ -336,7 +336,7 @@ newPassword: "NewMasterPassword456!"
 └─────────────────────────────────────────────────────────────┘
 
 Step 1: Verify old password
-  └─ bcrypt.verify(oldPassword, passwordHash)
+  └─ argon2id.compare(oldPassword, passwordHash)
       → Must return true
 
 Step 2: Derive old encryption key
@@ -349,23 +349,21 @@ Step 3: Decrypt master key with old derived key
       → Recovers original 32-byte random master key
       → ✅ Ciphers remain encrypted with this same master key!
 
-Step 4: Generate new salt (rotate salt for security)
-  └─ newSalt = crypto.randomBytes(32)
-      → "b4g6c9d2e5f8a1b4c7d0e3f6a9b2c5d8e1f4a7b0c3d6e9f2a5b8c1d4e7f0a3b6"
+Step 4: Reuse the existing salt (decoded in step 2)
+  └─ (no new salt is generated; the existing decodedSalt is reused)
 
 Step 5: Derive new encryption key from new password
-  └─ newDerivedKey = Argon2id(newPassword, newSalt)
+  └─ newDerivedKey = Argon2id(newPassword, decodedSalt)
 
 Step 6: Re-encrypt master key with new derived key
   └─ newEncryptedMasterKey = AES-GCM-encrypt(masterKey, newDerivedKey)
 
 Step 7: Hash new password
-  └─ newPasswordHash = bcrypt.hash(newPassword)
+  └─ newPasswordHash = argon2id.hash(newPassword)
 
 Step 8: Update user record
   └─ UPDATE users SET
        passwordHash = newPasswordHash,
-       masterKeySalt = newSalt,
        encryptedMasterKey = newEncryptedMasterKey,
        updatedAt = NOW()
      WHERE id = :userId
@@ -402,7 +400,7 @@ Step 8: Update user record
 | **Strong KDF** | Argon2id (memory-hard) |
 | **Authenticated encryption** | AES-GCM with auth tag |
 | **Cascade delete** | Deleting user removes all ciphers |
-| **Password hashing** | Bcrypt for login password |
+| **Password hashing** | Argon2id for login password |
 
 ### ⚠️ Security Trade-offs
 

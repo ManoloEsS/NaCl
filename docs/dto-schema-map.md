@@ -4,6 +4,28 @@ Maps backend Go DTOs (`nacl_backend/internal/dto/dto.go`) to frontend Zod schema
 
 ---
 
+## API endpoint reference
+
+All endpoints under `/api/*` are JSON. Static routes serve the embedded SPA. JWT-protected routes require an `Authorization: Bearer <token>` header; for re-authentication endpoints, `user_password` (the login password) is sent in the request body.
+
+| Method | Path | Auth | Body | Description |
+| --- | --- | --- | --- | --- |
+| `GET` | `/healthz` | none | none | Liveness probe. |
+| `GET` | `/` | none | none | Serve embedded `index.html`. |
+| `*` | `/assets/*` | none | none | Serve embedded static assets. |
+| `*` | (fallback) | none | none | SPA fallback to `index.html`. |
+| `POST` | `/api/users` | none | `username`, `user_password` | Create account; derive key, wrap master key, hash password. |
+| `PATCH` | `/api/users` | JWT | `user_password`, `new_password` | Rotate login password; re-encrypt master key atomically. |
+| `POST` | `/api/login` | none | `username`, `user_password` | Returns `id`, `username`, `token`. Token expires in 30 minutes. |
+| `POST` | `/api/credentials` | JWT | `service`, `service_username`, `description`, `service_password`, `encryption_algorithm`, `user_password` | Encrypt and store. Requires re-authentication. |
+| `GET` | `/api/credentials` | JWT | none | List credential metadata only (no passwords). |
+| `POST` | `/api/credentials/{id}/decrypt` | JWT | `user_password` | Returns the decrypted credential (service password in plaintext). |
+| `PATCH` | `/api/credentials/{id}` | JWT | `service_password`, `encryption_algorithm`, `user_password` | Update a credential password. |
+| `POST` | `/api/credentials/{id}/delete` | JWT | `user_password` | Delete a credential. |
+| `GET` | `/api/operations` | JWT | none | List the audit log for the authenticated user. |
+
+---
+
 ## Request DTOs (frontend → backend)
 
 Wire-format payloads the backend receives (frontend may add form-only fields client-side).
