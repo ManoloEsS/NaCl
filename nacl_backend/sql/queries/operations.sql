@@ -2,10 +2,9 @@
 INSERT INTO operations (
     user_id,
     op_type,
-    service,
-    credential_id
+    service
 )
-VALUES ($1, $2, $3, $4);
+VALUES ($1, $2, $3);
 
 -- name: GetOperationsForUserId :many
 SELECT *
