@@ -5,20 +5,12 @@ interface OperationProps {
 }
 
 export const OperationCard = ({ operation }: OperationProps) => {
-  const serviceStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5
-  }
-
   return (
     <div>
-      <div style={serviceStyle}>
-        <div>Service: {operation.service}</div>
-        <div>Operation type: {operation.op_type}</div>
-        <div>Time: {operation.created_at.toString()}</div>
+      <div className='operation-card'>
+        <div><strong>Service:</strong> {operation.service}</div>
+        <div><strong>Operation:</strong> {operation.op_type}</div>
+        <div><strong>Time:</strong> {operation.created_at.toString()}</div>
       </div>
     </div>
   )
