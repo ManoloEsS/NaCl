@@ -60,6 +60,8 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 		middleware.Recovery(s.Logger),
 	)
 
+	r.Get("/healthz", s.HandleHealthCheck)
+
 	r.Handle("/assets/*", http.StripPrefix("/assets", http.FileServer(http.FS(assetsRoot))))
 
 	r.NotFound(s.HandleIndex)
