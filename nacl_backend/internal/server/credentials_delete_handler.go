@@ -30,7 +30,7 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	req, err := dto.DecodeAndValidate[*dto.DeleteCredentialsRequest](r.Body)
+	req, err := dto.DecodeAndValidate[*dto.DeleteCredentialRequest](r.Body)
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("could not process payload: %w", err),
@@ -46,7 +46,7 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	serviceID, err := uuid.Parse(chi.URLParam(r, "id"))
+	credentialID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		err = apperr.WithAttrs(
 			fmt.Errorf("invalid service id: %w", err),
@@ -62,7 +62,7 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	serviceName, err := s.Svc.DeleteCredentials(r.Context(), userID, serviceID, req.UserPassword)
+	credentialService, err := s.Svc.DeleteCredential(r.Context(), credentialID, userID, req.UserPassword)
 	if err != nil {
 		if errors.Is(err, service.ErrCredentialNotFound) {
 			s.RespondWithJSON(w, http.StatusNoContent, nil)
@@ -97,9 +97,9 @@ func (s *Server) HandleDeleteCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), service.TypeDelete, serviceName, userID, serviceID)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeDelete, credentialService, userID)
 	if err != nil {
-		s.Logger.Error("could not save operation", "type", service.TypeDelete.String(), "service", serviceName)
+		s.Logger.Error("could not save operation", "type", service.TypeDelete.String(), "service", credentialService, "error", err)
 	}
 
 	s.RespondWithJSON(w, http.StatusNoContent, nil)
