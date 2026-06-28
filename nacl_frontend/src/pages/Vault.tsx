@@ -5,19 +5,21 @@ import { useEffect, useState } from 'react'
 import { CredentialCard } from '../components/CredentialCard'
 
 export const Vault = () => {
-  const [credentials, setCredentials] = useState<CredentialMetadata[] | null>(null)
+  const [credentials, setCredentials] = useState<CredentialMetadata[] | null>(
+    null
+  )
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchCredentials = async () => {
-      setLoading(true)
-      try {
-        const credentials = await listCredentials()
-        setCredentials(credentials)
-      } finally {
-        setLoading(false)
-      }
+  const fetchCredentials = async () => {
+    try {
+      const credentials = await listCredentials()
+      setCredentials(credentials)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchCredentials()
   }, [])
 
@@ -25,7 +27,11 @@ export const Vault = () => {
     return (
       <div>
         {credentials!.map((c) => (
-          <CredentialCard key={c.id} credential={c} />
+          <CredentialCard
+            key={c.id}
+            credential={c}
+            onDelete={fetchCredentials}
+          />
         ))}
       </div>
     )
@@ -33,7 +39,11 @@ export const Vault = () => {
 
   return (
     <Layout>
-      {loading || !credentials ? <div>loading</div> : <div>{credentialList()}</div>}
+      {loading || !credentials ? (
+        <div>loading</div>
+      ) : (
+        <div>{credentialList()}</div>
+      )}
     </Layout>
   )
 }

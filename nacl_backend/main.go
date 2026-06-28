@@ -57,7 +57,7 @@ func run(ctx context.Context) int {
 
 	queries := db.New(pool)
 
-	s := server.NewServer(queries, log, cfg)
+	s := server.NewServer(queries, log, cfg, DistFS)
 
 	var serverErr error
 	go func() {

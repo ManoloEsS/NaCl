@@ -6,7 +6,9 @@ import {
   UpdateCredentialSchema,
   type UpdateCredentialRequest,
   type NewCredentialFormRequest,
-  type DecryptRequest
+  type DecryptRequest,
+  DeleteCredentialRequest,
+  DeleteCredentialSchema
 } from '../lib/requestValidation'
 import {
   DecryptedCredentialSchema,
@@ -28,6 +30,15 @@ export const createCredential = async (
   const validated = CreateCredentialSchema.parse(credentialData)
   const req = await client.post('/credentials', validated)
   return CredentialMetadataSchema.parse(req.data)
+}
+
+export const deleteCredential = async (
+  credentialData: DeleteCredentialRequest
+): Promise<void> => {
+  const { credentialID, user_password } = credentialData
+  const validated = DeleteCredentialSchema.parse({ user_password })
+  const validatedID = CredentialID.parse(credentialID)
+  await client.post(`/credentials/${validatedID}/delete`, validated)
 }
 
 export const listCredentials = async (): Promise<CredentialMetadata[]> => {
@@ -52,7 +63,9 @@ export const decryptCredential = async (
 export const updateCredential = async ({
   credentialID,
   ...updateInput
-}: UpdateCredentialRequest & { credentialID: string }): Promise<CredentialMetadata> => {
+}: UpdateCredentialRequest & {
+  credentialID: string
+}): Promise<CredentialMetadata> => {
   const validated = UpdateCredentialSchema.parse(updateInput)
   const validatedID = CredentialID.parse(credentialID)
   const req = await client.patch(`/credentials/${validatedID}`, validated)

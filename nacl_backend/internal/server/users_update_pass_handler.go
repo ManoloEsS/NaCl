@@ -77,7 +77,7 @@ func (s *Server) HandleUpdateUserPassword(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), service.TypeUpdate, "nil", userID, uuid.Nil)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeUpdate, "nil", userID)
 	if err != nil {
 		s.Logger.Error("could not save operation", "type", service.TypeUpdate.String(), "error", err)
 	}

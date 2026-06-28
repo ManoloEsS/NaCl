@@ -13,12 +13,11 @@ import { OperationCard } from '../components/OperationCard'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 export const Account = () => {
-  const [operations, setOperations] = useState<OperationData[] | null>(null)
+  const [operations, setOperations] = useState<OperationData[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchOperations = async () => {
-      setLoading(true)
       try {
         const operations = await listOperations()
         setOperations(operations)
@@ -67,7 +66,7 @@ export const Account = () => {
         {operations!
           .sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
           .map((o) => (
-            <OperationCard key={o.credential_id} operation={o} />
+            <OperationCard key={o.id} operation={o} />
           ))}
       </div>
     )
@@ -75,63 +74,72 @@ export const Account = () => {
 
   return (
     <Layout>
-      <h2>Account</h2>
-      <div>Hello from Account</div>
-      <form onSubmit={handlePassUpdateSubmit(onPassUpdateSubmit)}>
-        <div>
-          <label htmlFor='user_password'>Current password </label>
-          <input
-            id='user_password'
-            type='password'
-            {...registerPassUpdate('user_password')}
-            autoFocus
-          />
-          {passUpdateErrors.user_password && (
-            <span className='field-error'>
-              {passUpdateErrors.user_password.message}
-            </span>
+      <div className='form-with-info'>
+        <div className='card card-narrow scrollable-list'>
+          <h3 className='card-title'>Operation History</h3>
+          {loading ? (
+            <div style={{ color: '#9e9ea0' }}>loading...</div>
+          ) : (
+            <div>{operationList()}</div>
           )}
         </div>
-        <div>
-          <label htmlFor='new_password'>New password </label>
-          <input
-            id='new_password'
-            type='password'
-            {...registerPassUpdate('new_password')}
-            autoFocus
-          />
-          {passUpdateErrors.new_password && (
-            <span className='field-error'>
-              {passUpdateErrors.new_password.message}
-            </span>
-          )}
+        <div className='info-panel'>
+          <h3 className='info-panel-title'>Change Password</h3>
+          <form onSubmit={handlePassUpdateSubmit(onPassUpdateSubmit)}>
+            <div className='form-group'>
+              <label htmlFor='user_password'>Current password</label>
+              <input
+                id='user_password'
+                type='password'
+                {...registerPassUpdate('user_password')}
+                autoFocus
+              />
+              {passUpdateErrors.user_password && (
+                <span className='field-error'>
+                  {passUpdateErrors.user_password.message}
+                </span>
+              )}
+            </div>
+            <div className='form-group'>
+              <label htmlFor='new_password'>New password</label>
+              <input
+                id='new_password'
+                type='password'
+                {...registerPassUpdate('new_password')}
+              />
+              {passUpdateErrors.new_password && (
+                <span className='field-error'>
+                  {passUpdateErrors.new_password.message}
+                </span>
+              )}
+            </div>
+            <div className='form-group'>
+              <label htmlFor='confirm_new_password'>Confirm new password</label>
+              <input
+                id='confirm_new_password'
+                type='password'
+                {...registerPassUpdate('confirm_new_password')}
+              />
+              {passUpdateErrors.confirm_new_password && (
+                <span className='field-error'>
+                  {passUpdateErrors.confirm_new_password.message}
+                </span>
+              )}
+            </div>
+            {passUpdateErrors.root && (
+              <p className='error'>{passUpdateErrors.root.message}</p>
+            )}
+            <div className='form-group'>
+              <button
+                type='submit'
+                className='btn-primary btn-full'
+                disabled={isSubmittingPassUpdate}
+              >
+                {isSubmittingPassUpdate ? 'Processing' : 'Update Password'}
+              </button>
+            </div>
+          </form>
         </div>
-        <div>
-          <label htmlFor='confirm_new_password'>Confirm new </label>
-          <input
-            id='confirm_new_password'
-            type='password'
-            {...registerPassUpdate('confirm_new_password')}
-            autoFocus
-          />
-          {passUpdateErrors.confirm_new_password && (
-            <span className='field-error'>
-              {passUpdateErrors.confirm_new_password.message}
-            </span>
-          )}
-        </div>
-        <div className='form-group'>
-          <button
-            type='submit'
-            className='btn-primary btn-full'
-            disabled={isSubmittingPassUpdate}
-          >
-            {isSubmittingPassUpdate ? 'Processing' : 'Update Password'}
-          </button>
-        </div>
-      </form>
-      <div>
-        {loading ? <div>loading...</div> : <div>{operationList()}</div>}
       </div>
     </Layout>
   )

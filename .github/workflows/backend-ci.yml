@@ -42,7 +42,7 @@ jobs:
           - postgres_data:/var/lib/postgresql
     
     env:
-      DATABASE_URL_TEST: postgresql://postgres:postgres@postgres:5432/nacl_test?sslmode=disable
+      DATABASE_URL_TEST: postgresql://postgres:postgres@localhost:5432/nacl_test?sslmode=disable
       JWT_SECRET: test-secret-key-ci
     
     steps:

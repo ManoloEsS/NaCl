@@ -84,7 +84,7 @@ func (s *Server) HandleCreateCredential(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	err = s.Svc.SaveOperation(r.Context(), service.TypeCreate, result.Service, userID, result.ID)
+	err = s.Svc.SaveOperation(r.Context(), service.TypeCreate, result.Service, userID)
 	if err != nil {
 		s.Logger.Error("could not save operation", "type", service.TypeCreate.String(), "service", result.Service)
 	}

@@ -59,6 +59,16 @@ export const DecryptRequestSchema = DecryptCredentialSchema.extend({
   credentialID: z.uuid()
 }).strict()
 
+export const DeleteCredentialSchema = z
+  .object({
+    user_password
+  })
+  .strict()
+
+export const DeleteRequestSchema = DeleteCredentialSchema.extend({
+  credentialID: z.uuid()
+}).strict()
+
 export const UpdateCredentialSchema = z
   .object({
     service_password,
@@ -75,3 +85,4 @@ export type UpdateCredentialRequest = z.infer<typeof UpdateCredentialSchema>
 export type NewCredentialFormRequest = z.infer<typeof NewCredentialFormSchema>
 export type UpdatePasswordRequest = z.infer<typeof UpdatePasswordSchema>
 export type DecryptRequest = z.infer<typeof DecryptRequestSchema>
+export type DeleteCredentialRequest = z.infer<typeof DeleteRequestSchema>
