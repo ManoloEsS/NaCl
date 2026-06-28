@@ -40,13 +40,14 @@ export const DecryptedCredentialSchema = z
   })
   .strict()
 
-export const OperationDataSchema = z.object({
-  id,
-  op_type: z.string(),
-  service,
-  credential_id: id,
-  created_at: z.string().pipe(z.coerce.date())
-})
+export const OperationDataSchema = z
+  .object({
+    id,
+    op_type: z.string(),
+    service,
+    created_at: z.string().pipe(z.coerce.date())
+  })
+  .strict()
 
 export const OperationDataArraySchema = z.array(OperationDataSchema)
 
@@ -59,6 +60,8 @@ export const ErrorSchema = z
 export type UserData = z.infer<typeof LoginResponseSchema>
 export type CredentialMetadata = z.infer<typeof CredentialMetadataSchema>
 export type DecryptedCredentials = z.infer<typeof DecryptedCredentialSchema>
-export type CredentialArrayMetadata = z.infer<typeof CredentialMetadataArraySchema>
+export type CredentialArrayMetadata = z.infer<
+  typeof CredentialMetadataArraySchema
+>
 export type OperationDataArray = z.infer<typeof OperationDataArraySchema>
 export type OperationData = z.infer<typeof OperationDataSchema>
