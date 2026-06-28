@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { Link, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 interface Props {
   children: ReactNode
@@ -19,16 +19,12 @@ export const Layout = ({ children }: Props) => {
     <div className='layout'>
       <nav className='navbar'>
         <div className='nav-brand'>
-          <Link to={'/dash'}>NaCl</Link>
+          <NavLink to={'/dash'}>NaCl</NavLink>
         </div>
         <div className='nav-links'>
-          <Link to='/vault'>Vault</Link>
-        </div>
-        <div className='nav-links'>
-          <Link to='/new'>New Service</Link>
-        </div>
-        <div className='nav-links'>
-          <Link to='/account'>Account</Link>
+          <NavLink to='/vault'>Vault</NavLink>
+          <NavLink to='/new'>New Credential</NavLink>
+          <NavLink to='/account'>Account</NavLink>
         </div>
         <div className='nav-user'>
           <span>{user?.username || user?.id}</span>
