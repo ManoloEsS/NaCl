@@ -61,6 +61,7 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 	)
 
 	r.Handle("/assets/*", http.StripPrefix("/assets", http.FileServer(http.FS(assetsRoot))))
+
 	r.NotFound(s.HandleIndex)
 	r.Get("/", s.HandleIndex)
 
