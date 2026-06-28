@@ -18,7 +18,6 @@ export const Account = () => {
 
   useEffect(() => {
     const fetchOperations = async () => {
-      setLoading(true)
       try {
         const operations = await listOperations()
         setOperations(operations)

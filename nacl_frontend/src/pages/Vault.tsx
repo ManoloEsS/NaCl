@@ -11,7 +11,6 @@ export const Vault = () => {
   const [loading, setLoading] = useState(true)
 
   const fetchCredentials = async () => {
-    setLoading(true)
     try {
       const credentials = await listCredentials()
       setCredentials(credentials)
