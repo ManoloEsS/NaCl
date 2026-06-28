@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"net"
 	"net/http"
@@ -20,12 +21,14 @@ type Server struct {
 	HTTPServer *http.Server
 	Svc        *service.Service
 	Logger     *slog.Logger
+	StaticFS   fs.FS
 }
 
 func NewServer(
 	db db.Querier,
 	logger *slog.Logger,
 	config *config.Config,
+	static fs.FS,
 ) *Server {
 	r := chi.NewRouter()
 
@@ -41,6 +44,7 @@ func NewServer(
 		HTTPServer: srv,
 		Svc:        svc,
 		Logger:     logger,
+		StaticFS:   static,
 	}
 
 	s.RegisterRoutes(r)
@@ -49,11 +53,15 @@ func NewServer(
 }
 
 func (s *Server) RegisterRoutes(r chi.Router) {
+	assetsRoot, _ := fs.Sub(s.StaticFS, "dist/assets")
+
 	r.Use(
 		middleware.RequestLogger(s.Logger),
 		middleware.Recovery(s.Logger),
 	)
 
+	r.Handle("/assets/*", http.StripPrefix("/assets", http.FileServer(http.FS(assetsRoot))))
+	r.NotFound(s.HandleIndex)
 	r.Get("/", s.HandleIndex)
 
 	r.Post("/api/users", s.HandleCreateUser)
@@ -71,7 +79,7 @@ func (s *Server) RegisterRoutes(r chi.Router) {
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
 		Patch("/api/credentials/{id}", s.HandleUpdateCredentialPassword)
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
-		Delete("/api/credentials/{id}", s.HandleDeleteCredential)
+		Post("/api/credentials/{id}/delete", s.HandleDeleteCredential)
 
 	r.With(middleware.TokenValidator(s.Logger, s.Config.JwtSecret)).
 		Get("/api/operations", s.HandleListOpsforUserID)
