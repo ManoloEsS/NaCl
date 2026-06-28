@@ -1,28 +1,23 @@
-import { useState, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import type {
   DecryptedCredentials,
   CredentialMetadata
 } from '../lib/responseValidation'
-import { decryptCredential } from '../services/cryptoServices'
+import { decryptCredential, deleteCredential } from '../services/cryptoServices'
 import { useToast } from '../context/ToastContext'
 
 interface CredentialProps {
   credential: CredentialMetadata
+  onDelete?: () => void
 }
 
-export const CredentialCard = ({ credential }: CredentialProps) => {
+export const CredentialCard = ({ credential, onDelete }: CredentialProps) => {
   const { showToast } = useToast()
-  const credentialStyle = {
-    paddingTop: 10,
-    paddingLeft: 2,
-    border: 'solid',
-    borderWidth: 1,
-    marginBottom: 5
-  }
   const [show, setShow] = useState(false)
   const [decrypted, setDecrypted] = useState<DecryptedCredentials | null>(null)
   const [userPass, setUserPass] = useState('')
 
+  const inputRef = useRef<HTMLInputElement>(null)
   const handleDecrypt = async () => {
     try {
       const decryptedSvc = await decryptCredential({
@@ -40,6 +35,7 @@ export const CredentialCard = ({ credential }: CredentialProps) => {
       setUserPass('')
       setDecrypted(null)
       setShow(false)
+      inputRef.current?.focus()
     }
   }
   const handleHideDecrypt = () => {
@@ -53,25 +49,107 @@ export const CredentialCard = ({ credential }: CredentialProps) => {
     setUserPass(event.target.value)
   }
 
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      showToast(`${label} copied`, 'success')
+    } catch {
+      showToast('Failed to copy', 'error')
+    }
+  }
+
+  const handleDelete = async () => {
+    console.log('deleted')
+    try {
+      if (
+        window.confirm(
+          `This will delete the data for ${credential.service} permanently. Are you sure?`
+        )
+      ) {
+        await deleteCredential({
+          credentialID: credential.id,
+          user_password: userPass
+        })
+        showToast(`${credential.service} deleted`, 'success')
+      }
+      onDelete?.()
+    } catch (e) {
+      console.log(e)
+      showToast('Failed to delete', 'error')
+    }
+  }
+
   return (
     <div>
-      <div style={credentialStyle}>
-        <div>Service: {credential.service}</div>
-        <div>Encryption Algorithm: {credential.encryption_algorithm}</div>
-        <div>Description: {credential.description ? credential.description : ''}</div>
+      <div className='credential-card'>
+        <div className='credential-service'>
+          <strong>Service:</strong> {credential.service}
+        </div>
+        <div>
+          <strong>Description:</strong>{' '}
+          {credential.description ? credential.description : ''}
+        </div>
         {show ? (
           <div>
-            <div>Username: {decrypted?.service_username}</div>
-            <div>Password: {decrypted?.service_password}</div>
-            <div>Created: {decrypted?.created_at.toString()}</div>
-            <div>Updated: {decrypted?.updated_at.toString()}</div>
-
-            <button onClick={handleHideDecrypt}>Hide credentials</button>
+            <div className='credential-card-line credential-copy-row'>
+              <span>
+                <strong>Username:</strong> {decrypted?.service_username}
+              </span>
+              <button
+                className='btn-copy'
+                onClick={() =>
+                  copyToClipboard(decrypted?.service_username ?? '', 'Username')
+                }
+                title='Copy username'
+              >
+                Copy
+              </button>
+            </div>
+            <div className='credential-card-line credential-copy-row'>
+              <span>
+                <strong>Password:</strong> {decrypted?.service_password}
+              </span>
+              <button
+                className='btn-copy'
+                onClick={() =>
+                  copyToClipboard(decrypted?.service_password ?? '', 'Password')
+                }
+                title='Copy password'
+              >
+                Copy
+              </button>
+            </div>
+            <div className='credential-card-line'>
+              <strong>Encryption Algorithm:</strong>{' '}
+              {credential.encryption_algorithm}
+            </div>
+            <div className='credential-card-line'>
+              <strong>Created:</strong> {decrypted?.created_at.toString()}
+            </div>
+            <div className='credential-card-line'>
+              <strong>Updated:</strong> {decrypted?.updated_at.toString()}
+            </div>
+            <div className='credential-btn-line'>
+              <button onClick={handleHideDecrypt} className='btn-primary'>
+                Hide credentials
+              </button>
+              <button onClick={handleDelete} className='btn-danger btn-primary'>
+                Delete
+              </button>
+            </div>
           </div>
         ) : (
-          <div>
-            <input type='password' value={userPass} onChange={handleChange} />
-            <button onClick={handleDecrypt}>Show credentials</button>
+          <div className='credential-decrypt'>
+            <input
+              type='password'
+              value={userPass}
+              onChange={handleChange}
+              placeholder='Enter your password'
+              ref={inputRef}
+            />
+            <button onClick={handleDecrypt} className='btn-small btn-primary'>
+              Show credentials
+            </button>
           </div>
         )}
       </div>
