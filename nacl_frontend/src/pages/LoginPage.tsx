@@ -36,6 +36,13 @@ export const LoginPage = () => {
 
   return (
     <div className='login-page'>
+      <div className='login-hero'>
+        <h2>Your credentials, your key.</h2>
+        <p>
+          NaCl encrypts everything before it leaves your device. Not even we can
+          read your passwords.
+        </p>
+      </div>
       <div className='login-card'>
         <h1>NaCl</h1>
         <p className='login-subtitle'>Password Manager</p>

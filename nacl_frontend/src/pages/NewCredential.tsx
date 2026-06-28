@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Layout } from '../components/Layout'
 import {
@@ -8,9 +9,40 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { createCredential } from '../services/cryptoServices'
 import { useToast } from '../context/ToastContext'
 
-//TODO: styling and encryption information below form
+const fieldInfo: Record<string, { title: string; body: string }> = {
+  service: {
+    title: 'Service',
+    body: 'The name of the service or website you are creating credentials for (e.g., GitHub, AWS, Gmail).'
+  },
+  service_username: {
+    title: 'Service Username',
+    body: 'Your username or email used to log in to this service.'
+  },
+  service_password: {
+    title: 'Service Password',
+    body: 'The password for this service account.'
+  },
+  confirm_service_password: {
+    title: 'Confirm Password',
+    body: 'Re-enter the password to confirm it was typed correctly.'
+  },
+  description: {
+    title: 'Description',
+    body: 'A short note to help identify these credentials (optional).'
+  },
+  encryption_algorithm: {
+    title: 'Encryption Algorithm',
+    body: 'The cipher used to encrypt your credentials before storing them. AES-GCM is the recommended standard.'
+  },
+  user_password: {
+    title: 'User Password',
+    body: 'Your master NaCl password. This is used to encrypt and decrypt all your stored credentials.'
+  }
+}
+
 export const NewCredential = () => {
   const { showToast } = useToast()
+  const [activeField, setActiveField] = useState<string | null>(null)
   const {
     reset,
     register,
@@ -31,101 +63,196 @@ export const NewCredential = () => {
     }
   }
 
+  const info = activeField ? fieldInfo[activeField] : null
+
   return (
     <Layout>
-      <h2>New Credential</h2>
-      <div>Hello from NewCredential</div>
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <label htmlFor='service'>Service</label>
-          <input id='service' type='text' {...register('service')} autoFocus />
-          {errors.service && (
-            <span className='field-error'>{errors.service.message}</span>
+      <div className='form-with-info'>
+        <div className='card card-narrow'>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='service'>Service</label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() => setActiveField('service')}
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <input
+                id='service'
+                type='text'
+                {...register('service')}
+                autoFocus
+              />
+              {errors.service && (
+                <span className='field-error'>{errors.service.message}</span>
+              )}
+            </div>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='service_username'>Service Username</label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() => setActiveField('service_username')}
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <input
+                id='service_username'
+                type='text'
+                {...register('service_username')}
+              />
+              {errors.service_username && (
+                <span className='field-error'>
+                  {errors.service_username.message}
+                </span>
+              )}
+            </div>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='service_password'>Service Password</label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() => setActiveField('service_password')}
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <input
+                id='service_password'
+                type='password'
+                {...register('service_password')}
+              />
+              {errors.service_password && (
+                <span className='field-error'>
+                  {errors.service_password.message}
+                </span>
+              )}
+            </div>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='confirm_service_password'>
+                  Confirm Service Password
+                </label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() =>
+                    setActiveField('confirm_service_password')
+                  }
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <input
+                id='confirm_service_password'
+                type='password'
+                {...register('confirm_service_password')}
+              />
+              {errors.confirm_service_password && (
+                <span className='field-error'>
+                  {errors.confirm_service_password.message}
+                </span>
+              )}
+            </div>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='description'>Description</label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() => setActiveField('description')}
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <textarea
+                id='description'
+                rows={3}
+                {...register('description')}
+              />
+              {errors.description && (
+                <span className='field-error'>
+                  {errors.description.message}
+                </span>
+              )}
+            </div>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='encryption_algorithm'>
+                  Encryption Algorithm
+                </label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() => setActiveField('encryption_algorithm')}
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <select
+                id='encryption_algorithm'
+                {...register('encryption_algorithm')}
+              >
+                <option value='aes-gcm'>AES-GCM</option>
+              </select>
+            </div>
+            <div className='form-group'>
+              <div className='form-label-row'>
+                <label htmlFor='user_password'>User Password</label>
+                <span
+                  className='field-info'
+                  onMouseEnter={() => setActiveField('user_password')}
+                  onMouseLeave={() => setActiveField(null)}
+                >
+                  ?
+                </span>
+              </div>
+              <input
+                id='user_password'
+                type='password'
+                {...register('user_password')}
+              />
+              {errors.user_password && (
+                <span className='field-error'>
+                  {errors.user_password.message}
+                </span>
+              )}
+            </div>
+            {errors.root && <p className='error'>{errors.root.message}</p>}
+            <div className='form-group'>
+              <button
+                type='submit'
+                className='btn-primary btn-full'
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Processing' : 'Encrypt and Save'}
+              </button>
+            </div>
+          </form>
+        </div>
+        <div className='info-panel'>
+          {info ? (
+            <>
+              <h3 className='info-panel-title'>{info.title}</h3>
+              <p className='info-panel-body'>{info.body}</p>
+            </>
+          ) : (
+            <>
+              <h3 className='info-panel-title'>Field Info</h3>
+              <p className='info-panel-body'>
+                Hover the ? icon next to any field for details.
+              </p>
+            </>
           )}
         </div>
-        <div>
-          <label htmlFor='service_username'>Service Username</label>
-          <input
-            id='service_username'
-            type='text'
-            {...register('service_username')}
-            autoFocus
-          />
-          {errors.service_username && (
-            <span className='field-error'>
-              {errors.service_username.message}
-            </span>
-          )}
-        </div>
-        <div>
-          <label htmlFor='service_password'>Service Password</label>
-          <input
-            id='service_password'
-            type='password'
-            {...register('service_password')}
-            autoFocus
-          />
-          {errors.service_password && (
-            <span className='field-error'>
-              {errors.service_password.message}
-            </span>
-          )}
-        </div>
-        <div>
-          <label htmlFor='confirm_service_password'>
-            Confirm Service Password
-          </label>
-          <input
-            id='confirm_service_password'
-            type='password'
-            {...register('confirm_service_password')}
-            autoFocus
-          />
-          {errors.confirm_service_password && (
-            <span className='field-error'>
-              {errors.confirm_service_password.message}
-            </span>
-          )}
-        </div>
-        <div>
-          <label htmlFor='description'>Description</label>
-          <input id='description' type='text' {...register('description')} />
-          {errors.description && (
-            <span className='field-error'>{errors.description.message}</span>
-          )}
-        </div>
-        <div>
-          <label htmlFor='encryption_algorithm'>Encryption Algorithm</label>
-          <select
-            id='encryption_algorithm'
-            {...register('encryption_algorithm')}
-          >
-            <option value='aes-gcm'>aes-gcm</option>
-          </select>
-        </div>
-        <div>
-          <label htmlFor='user_password'>User Password</label>
-          <input
-            id='user_password'
-            type='password'
-            {...register('user_password')}
-            autoFocus
-          />
-          {errors.user_password && (
-            <span className='field-error'>{errors.user_password.message}</span>
-          )}
-        </div>
-        {errors.root && <p className='error'>{errors.root.message}</p>}
-        <div className='form-group'>
-          <button
-            type='submit'
-            className='btn-primary btn-full'
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Processing' : 'Encrypt and Save'}
-          </button>
-        </div>
-      </form>
+      </div>
     </Layout>
   )
 }

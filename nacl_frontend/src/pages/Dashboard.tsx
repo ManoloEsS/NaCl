@@ -3,11 +3,14 @@ import { Layout } from '../components/Layout'
 export const Dashboard = () => {
   return (
     <Layout>
-      <h2>Dashboard</h2>
-      <div>Hello from dash</div>
-      <div>
-        here will go the information about the website, why encrypt passwords
-        yourself and the way it works
+      <div className='card'>
+        <h3 className='card-title'>Why encrypt your own passwords?</h3>
+        <p className='card-text'>
+          Storing passwords in your browser or with third-party services puts
+          your credentials in someone else&apos;s hands. NaCl encrypts
+          everything on your device before it ever reaches the server, so only
+          you hold the key.
+        </p>
       </div>
     </Layout>
   )
