@@ -208,7 +208,7 @@ func (svc *Service) UpdateCredentialPassword(ctx context.Context, userID, creden
 	}, nil
 }
 
-func (svc *Service) DeleteCredentials(ctx context.Context, credentialID, userID uuid.UUID, password string) (string, error) {
+func (svc *Service) DeleteCredential(ctx context.Context, credentialID, userID uuid.UUID, password string) (string, error) {
 	match, err := svc.VerifyUserPassword(ctx, userID, password)
 	if !match || err != nil {
 		return "", ErrUnauthorized
