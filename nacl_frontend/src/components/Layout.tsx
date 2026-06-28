@@ -1,19 +1,13 @@
 import type { ReactNode } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 
 interface Props {
   children: ReactNode
 }
 
 export const Layout = ({ children }: Props) => {
-  const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
-  const handleLogout = () => {
-    logout()
-    navigate('/login')
-  }
+  const { user } = useAuth()
 
   return (
     <div className='layout'>
@@ -28,9 +22,6 @@ export const Layout = ({ children }: Props) => {
         </div>
         <div className='nav-user'>
           <span>{user?.username || user?.id}</span>
-          <button onClick={handleLogout} className='btn-small'>
-            Logout
-          </button>
         </div>
       </nav>
       <main className='main-content'>{children}</main>

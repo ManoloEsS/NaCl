@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Layout } from '../components/Layout'
 import {
@@ -42,7 +41,6 @@ const fieldInfo: Record<string, { title: string; body: string }> = {
 
 export const NewCredential = () => {
   const { showToast } = useToast()
-  const [activeField, setActiveField] = useState<string | null>(null)
   const {
     reset,
     register,
@@ -63,8 +61,6 @@ export const NewCredential = () => {
     }
   }
 
-  const info = activeField ? fieldInfo[activeField] : null
-
   return (
     <Layout>
       <div className='form-with-info'>
@@ -75,8 +71,7 @@ export const NewCredential = () => {
                 <label htmlFor='service'>Service</label>
                 <span
                   className='field-info'
-                  onMouseEnter={() => setActiveField('service')}
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.service.body}
                 >
                   ?
                 </span>
@@ -96,8 +91,7 @@ export const NewCredential = () => {
                 <label htmlFor='service_username'>Service Username</label>
                 <span
                   className='field-info'
-                  onMouseEnter={() => setActiveField('service_username')}
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.service_username.body}
                 >
                   ?
                 </span>
@@ -118,8 +112,7 @@ export const NewCredential = () => {
                 <label htmlFor='service_password'>Service Password</label>
                 <span
                   className='field-info'
-                  onMouseEnter={() => setActiveField('service_password')}
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.service_password.body}
                 >
                   ?
                 </span>
@@ -142,10 +135,7 @@ export const NewCredential = () => {
                 </label>
                 <span
                   className='field-info'
-                  onMouseEnter={() =>
-                    setActiveField('confirm_service_password')
-                  }
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.confirm_service_password.body}
                 >
                   ?
                 </span>
@@ -166,8 +156,7 @@ export const NewCredential = () => {
                 <label htmlFor='description'>Description</label>
                 <span
                   className='field-info'
-                  onMouseEnter={() => setActiveField('description')}
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.description.body}
                 >
                   ?
                 </span>
@@ -190,8 +179,7 @@ export const NewCredential = () => {
                 </label>
                 <span
                   className='field-info'
-                  onMouseEnter={() => setActiveField('encryption_algorithm')}
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.encryption_algorithm.body}
                 >
                   ?
                 </span>
@@ -208,8 +196,7 @@ export const NewCredential = () => {
                 <label htmlFor='user_password'>User Password</label>
                 <span
                   className='field-info'
-                  onMouseEnter={() => setActiveField('user_password')}
-                  onMouseLeave={() => setActiveField(null)}
+                  data-tooltip={fieldInfo.user_password.body}
                 >
                   ?
                 </span>
@@ -237,21 +224,7 @@ export const NewCredential = () => {
             </div>
           </form>
         </div>
-        <div className='info-panel'>
-          {info ? (
-            <>
-              <h3 className='info-panel-title'>{info.title}</h3>
-              <p className='info-panel-body'>{info.body}</p>
-            </>
-          ) : (
-            <>
-              <h3 className='info-panel-title'>Field Info</h3>
-              <p className='info-panel-body'>
-                Hover the ? icon next to any field for details.
-              </p>
-            </>
-          )}
-        </div>
+
       </div>
     </Layout>
   )

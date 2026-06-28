@@ -1,5 +1,7 @@
+import { useAuth } from '../context/AuthContext'
 import { Layout } from '../components/Layout'
 import { useToast } from '../context/ToastContext'
+import { useNavigate } from 'react-router-dom'
 import {
   UpdatePasswordSchema,
   type UpdatePasswordRequest
@@ -13,8 +15,15 @@ import { OperationCard } from '../components/OperationCard'
 import { zodResolver } from '@hookform/resolvers/zod'
 
 export const Account = () => {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const [operations, setOperations] = useState<OperationData[]>([])
   const [loading, setLoading] = useState(true)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   useEffect(() => {
     const fetchOperations = async () => {
@@ -84,7 +93,16 @@ export const Account = () => {
           )}
         </div>
         <div className='info-panel'>
-          <h3 className='info-panel-title'>Change Password</h3>
+          <div className='account-info-card'>
+            <h3 className='info-panel-title'>Account</h3>
+            <p className='account-info-text'>
+              Logged in as <strong>{user?.username || user?.id}</strong>
+            </p>
+            <button onClick={handleLogout} className='btn-primary btn-full'>
+              Logout
+            </button>
+          </div>
+          <h3 className='info-panel-title info-panel-title--spaced'>Change Password</h3>
           <form onSubmit={handlePassUpdateSubmit(onPassUpdateSubmit)}>
             <div className='form-group'>
               <label htmlFor='user_password'>Current password</label>
