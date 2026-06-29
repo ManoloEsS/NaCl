@@ -4,10 +4,12 @@
 [![Frontend CI](https://github.com/ManoloEsS/NaCl/actions/workflows/frontend-ci.yml/badge.svg)](https://github.com/ManoloEsS/NaCl/actions/workflows/frontend-ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](https://go.dev)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://nacl-g5mw.onrender.com)
 
 > A single-binary password manager implementing envelope encryption (AES-256-GCM over an Argon2id-derived key) with a Go HTTP backend serving an embedded React SPA.
+
+**Live demo:** https://nacl-g5mw.onrender.com
 
 <!-- TODO screenshot: docs/readme_drafts/hero-shot.png -->
 
