@@ -80,14 +80,6 @@ Two keys, not one:
 - A random **master key** encrypts *your credentials*.
 - Your login password derives a **wrapping key** (via Argon2id) that encrypts *only the master key*.
 
-```mermaid
-flowchart LR
-    PW["Login password"] -->|Argon2id + salt| DK["Wrapping key"]
-    MK["Random master key"] -->|AES-256-GCM| EMK["stored encrypted"]
-    DK -->|encrypts| EMK
-    MK -->|AES-256-GCM| Cred["All your credentials"]
-```
-
 So when you change your login password, you only re-encrypt the master key: `O(1)`, not `O(vault size)`. The full design, including the registration, decryption, and rotation flows in detail, is in [`nacl_backend/docs/encryption_flow.md`](./nacl_backend/docs/encryption_flow.md).
 
 ## Envelope encryption and key rotation
