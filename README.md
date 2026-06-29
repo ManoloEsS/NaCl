@@ -158,8 +158,7 @@ flowchart LR
     Browser["Browser\nReact SPA\n(Vite dev → proxies /api to backend)"] -->|HTTP /api/*| Router["Router"]
     Router --> MW["Middleware\nlogging → recovery → JWT validation"]
     MW --> Handler["Handler\n1. decode + validate DTO\n2. call service\n3. map errors to HTTP"]
-    Handler --> Service["Service\nbusiness logic + crypto orchestration"]
-    Service --> Service layer
+    Handler --> Service["Service\nusers · credentials · operations\ncrypto orchestration"]
     Router --> Static["Embedded static FS\nSPA fallback"]
     Static --> Browser
 ```
