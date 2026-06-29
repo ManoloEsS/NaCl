@@ -10,7 +10,7 @@ import { useToast } from '../context/ToastContext'
 
 const fieldInfo: Record<string, { title: string; body: string }> = {
   service: {
-    title: 'Service',
+    title: 'Service Name',
     body: 'The name of the service or website you are creating credentials for (e.g., GitHub, AWS, Gmail).'
   },
   service_username: {
@@ -31,7 +31,7 @@ const fieldInfo: Record<string, { title: string; body: string }> = {
   },
   encryption_algorithm: {
     title: 'Encryption Algorithm',
-    body: 'The cipher used to encrypt your credentials before storing them. AES-GCM is the recommended standard.'
+    body: 'The cipher used to encrypt your credentials before storing them. AES-GCM is the recommended standard: it provides authenticated encryption, meaning any tampering with the ciphertext is detected on decryption.'
   },
   user_password: {
     title: 'User Password',
@@ -69,12 +69,6 @@ export const NewCredential = () => {
             <div className='form-group'>
               <div className='form-label-row'>
                 <label htmlFor='service'>Service</label>
-                <span
-                  className='field-info'
-                  data-tooltip={fieldInfo.service.body}
-                >
-                  ?
-                </span>
               </div>
               <input
                 id='service'
@@ -153,7 +147,7 @@ export const NewCredential = () => {
             </div>
             <div className='form-group'>
               <div className='form-label-row'>
-                <label htmlFor='description'>Description</label>
+                <label htmlFor='description'>Description (optional)</label>
                 <span
                   className='field-info'
                   data-tooltip={fieldInfo.description.body}
@@ -224,7 +218,6 @@ export const NewCredential = () => {
             </div>
           </form>
         </div>
-
       </div>
     </Layout>
   )
