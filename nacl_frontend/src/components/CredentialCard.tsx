@@ -66,14 +66,22 @@ export const CredentialCard = ({ credential, onDelete }: CredentialProps) => {
           `This will delete the data for ${credential.service} permanently. Are you sure?`
         )
       ) {
-        await deleteCredential({
-          credentialID: credential.id,
-          user_password: userPass
-        })
-        showToast(`${credential.service} deleted`, 'success')
+        if (
+          credential.description !== 'super secret password for secret account'
+        ) {
+          await deleteCredential({
+            credentialID: credential.id,
+            user_password: userPass
+          })
+          showToast(`${credential.service} deleted`, 'success')
+        } else {
+          showToast(
+            'Deleting demo credential is disabled, try creating one yourself'
+          )
+        }
       }
-      onDelete?.()
     } catch (e) {
+      onDelete?.()
       console.log(e)
       showToast('Failed to delete', 'error')
     }

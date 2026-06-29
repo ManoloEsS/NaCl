@@ -5,7 +5,6 @@ import {
   CreateUserSchema
 } from '../lib/requestValidation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { registerUser } from '../services/authServices'
 import { LoginHero } from '../components/LoginHero'
 import { useToast } from '../context/ToastContext'
 
@@ -21,10 +20,13 @@ export const RegistrationPage = () => {
     resolver: zodResolver(CreateUserSchema)
   })
 
-  const onSubmit = async (data: CreateUserRequest) => {
+  const onSubmit = async (_data: CreateUserRequest) => {
     try {
-      await registerUser(data)
-      showToast('Registration successful! Redirecting to login...', 'success')
+      // await registerUser(data)
+      showToast(
+        'Registering new users is disabled in demo, login with Test_user account',
+        'success'
+      )
       setTimeout(() => navigate('/login', { replace: true }), 1500)
     } catch {
       setError('root', { message: 'Could not register user' })

@@ -39,6 +39,13 @@ export const Vault = () => {
 
   return (
     <Layout>
+      <p className='credential-card'>
+        <text>
+          Use your master NaCl password to decrypt credentials.
+          <br />
+          For this demo you can use password: <strong>hashandeggs</strong>
+        </text>
+      </p>
       {loading || !credentials ? (
         <div>loading</div>
       ) : (

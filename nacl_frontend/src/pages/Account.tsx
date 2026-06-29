@@ -7,7 +7,6 @@ import {
   type UpdatePasswordRequest
 } from '../lib/requestValidation'
 import { useForm } from 'react-hook-form'
-import { updatePassword } from '../services/authServices'
 import { OperationData } from '../lib/responseValidation'
 import { useEffect, useState } from 'react'
 import { listOperations } from '../services/operationsServices'
@@ -51,13 +50,14 @@ export const Account = () => {
     resolver: zodResolver(UpdatePasswordSchema)
   })
 
-  const onPassUpdateSubmit = async (data: UpdatePasswordRequest) => {
+  const onPassUpdateSubmit = async (_data: UpdatePasswordRequest) => {
     try {
-      if (window.confirm('This will change your password. Are you sure?')) {
-        await updatePassword(data)
-        showToast('Password updated', 'success')
-        resetPassUpdate()
-      }
+      showToast('Password updating disable for demo', 'info')
+      // if (window.confirm('This will change your password. Are you sure?')) {
+      //   await updatePassword(data)
+      // showToast('Password updated', 'success')
+      // resetPassUpdate()
+      // }
     } catch (error: any) {
       setPassUpdateError('root', { message: 'Could not update user password' })
       resetPassUpdate()
@@ -102,7 +102,9 @@ export const Account = () => {
               Logout
             </button>
           </div>
-          <h3 className='info-panel-title info-panel-title--spaced'>Change Password</h3>
+          <h3 className='info-panel-title info-panel-title--spaced'>
+            Change Password
+          </h3>
           <form onSubmit={handlePassUpdateSubmit(onPassUpdateSubmit)}>
             <div className='form-group'>
               <label htmlFor='user_password'>Current password</label>

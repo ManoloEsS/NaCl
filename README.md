@@ -167,36 +167,15 @@ Architectural decisions are recorded as ADRs in [`docs/decisions.md`](./docs/dec
 
 ## Quickstart
 
-### Option A: Docker (recommended)
+### Option A: Docker Compose (recommended)
 
-Requires Docker. The application needs a PostgreSQL instance. Start one and create the database:
+Requires Docker.
 
 ```bash
-# Create a shared Docker network
-docker network create nacl
-
-# Start PostgreSQL on the shared network (skip if you already have one running)
-docker run -d --network nacl --name nacl_postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  postgres:18
-
-# Wait for PostgreSQL to be ready
-sleep 3
-
-# Create the database
-docker exec nacl_postgres psql -U postgres -c "CREATE DATABASE nacl_dev;"
-
-# Build and run NaCl on the same network (migrations run automatically on startup)
-docker build -t nacl .
-docker run -p 3333:3333 --network nacl \
-  -e DATABASE_URL="postgresql://postgres:postgres@nacl_postgres:5432/nacl_dev?sslmode=disable" \
-  -e JWT_SECRET="your-secret" \
-  -e SALT_PORT=3333 \
-  nacl
+docker compose up
 ```
 
-The container ships the frontend embedded in the Go binary; no separate web server is required.
+The database is created automatically, migrations run on startup, and the frontend is embedded in the Go binary. The app is available at `http://localhost:3333`.
 
 ### Option B: Full local dev environment
 
@@ -214,6 +193,8 @@ npm run dev
 ```
 
 See [`nacl_backend/docs/dev_env_config.md`](./nacl_backend/docs/dev_env_config.md) for the full prerequisites list.
+
+Make sure your `.env` file in `nacl_backend/` has the required variables: `DATABASE_URL`, `JWT_SECRET`, and `SALT_PORT`. See [Development](#development) for the full table.
 
 ### Option C: Manual build
 
@@ -239,7 +220,7 @@ commands below.
 | `DATABASE_URL` | yes | PostgreSQL connection string for the dev database. |
 | `DATABASE_URL_TEST` | tests | PostgreSQL connection string for the test database. |
 | `JWT_SECRET` | yes (random fallback) | HS256 signing key. A random value is generated if missing. |
-| `SALT_PORT` | no | Listen port. Falls back to `PORT`, then a platform default. |
+| `SALT_PORT` | yes | Listen port. |
 | `PORT` | no | Alternate listen port (Render compatibility). |
 | `SALT_LOG_FILE` | no | Path to the request log file. |
 | `DB_SSL` | no | Enables SSL on the database connection. |
@@ -321,7 +302,7 @@ Things we plan to work on in the future:
 - [`docs/user_stories.md`](./docs/user_stories.md) - MVP scope and the explicit list of post-MVP features.
 - [`nacl_backend/docs/encryption_flow.md`](./docs/nacl_backend/docs/encryption_flow.md) - the full crypto design with diagrams.
 - [`docs/dto-schema-map.md`](./docs/dto-schema-map.md) - how Go DTOs and Zod schemas stay in sync.
-- [`nacl_backend/docs/dev_env_config.md`](./docs/nacl_backend/docs/dev_env_config.md) - local prerequisites and tool installs.
+- [`nacl_backend/docs/dev_env_config.md`](./nacl_backend/docs/dev_env_config.md) - local prerequisites and tool installs.
 
 The remaining files under `docs/` and `nacl_backend/docs/` are bonus material on specific topics (serving React from Go, error handling, migrations, frontend setup, CSS patterns).
 
