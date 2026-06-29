@@ -251,6 +251,8 @@ logged at `Debug` level so the sequence is traceable in the output.
 Requires Docker. Build and start both services:
 
 ```bash
+git clone https://github.com/ManoloEsS/NaCl.git
+cd NaCl
 docker compose up --build
 ```
 
@@ -288,11 +290,14 @@ Requires Go, Node, Docker, and the tools `goose`, `sqlc`, and `air` installed vi
 
 ```bash
 # From nacl_backend/: starts Postgres, applies migrations, hot-reloads Go
+git clone https://github.com/ManoloEsS/NaCl.git
+cd NaCl/nacl_backend
 make dev-full
 ```
 
 ```bash
 # From nacl_frontend/: Vite dev server on :5173, proxies /api to :3333
+cd NaCl/nacl_frontend
 npm install
 npm run dev
 ```
