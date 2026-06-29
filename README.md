@@ -25,7 +25,7 @@ One design choice is worth flagging up front: if you ever change your login pass
 
 NaCl is a monolithic web application: a Go HTTP backend serving a React 19 single-page application, both compiled into one self-contained binary.
 
-The architecture is recorded as a set of Architecture Decision Records (ADRs) in [`docs/decisions.md`](../decisions.md), and the encryption design is fully documented in [`nacl_backend/docs/encryption_flow.md`](../../nacl_backend/docs/encryption_flow.md). The repository follows strict conventional commits and is exercised by two path-scoped GitHub Actions workflows.
+The architecture is recorded as a set of Architecture Decision Records (ADRs) in [`docs/decisions.md`](./docs/decisions.md), and the encryption design is fully documented in [`nacl_backend/docs/encryption_flow.md`](./nacl_backend/docs/encryption_flow.md). The repository follows strict conventional commits and is exercised by two path-scoped GitHub Actions workflows.
 
 ## Table of Contents
 
@@ -88,7 +88,7 @@ flowchart LR
     MK -->|AES-256-GCM| Cred["All your credentials"]
 ```
 
-So when you change your login password, you only re-encrypt the master key: `O(1)`, not `O(vault size)`. The full design, including the registration, decryption, and rotation flows in detail, is in [`nacl_backend/docs/encryption_flow.md`](../../nacl_backend/docs/encryption_flow.md).
+So when you change your login password, you only re-encrypt the master key: `O(1)`, not `O(vault size)`. The full design, including the registration, decryption, and rotation flows in detail, is in [`nacl_backend/docs/encryption_flow.md`](./nacl_backend/docs/encryption_flow.md).
 
 ## Envelope encryption and key rotation
 
@@ -118,22 +118,22 @@ The two-key design earns its keep on password rotation. With a naive scheme that
 
 Credential rows are never read or written during rotation. The cost of a rotation is independent of how many credentials you have stored.
 
-Full design document and rationale: [`nacl_backend/docs/encryption_flow.md`](../../nacl_backend/docs/encryption_flow.md). ADRs covering crypto choices: [`docs/decisions.md`](../decisions.md).
+Full design document and rationale: [`nacl_backend/docs/encryption_flow.md`](./nacl_backend/docs/encryption_flow.md). ADRs covering crypto choices: [`docs/decisions.md`](./docs/decisions.md).
 
 ## DTO contracts: Go structs and Zod schemas
 
-The Go struct in [`nacl_backend/internal/dto/dto.go`](../../nacl_backend/internal/dto/dto.go) is the single source of truth for request and response shapes. The frontend mirrors those shapes with Zod schemas in [`nacl_frontend/src/lib/`](../../nacl_frontend/src/lib/): one set for requests, one for responses.
+The Go struct in [`nacl_backend/internal/dto/dto.go`](./nacl_backend/internal/dto/dto.go) is the single source of truth for request and response shapes. The frontend mirrors those shapes with Zod schemas in [`nacl_frontend/src/lib/`](../../nacl_frontend/src/lib/): one set for requests, one for responses.
 
-The crosswalk between the Go DTOs and the Zod schemas is documented in [`docs/dto-schema-map.md`](../dto-schema-map.md). If the two sides drift, the Zod schemas' `.strict()` mode rejects unknown keys at runtime, so a mismatch surfaces as a failing request rather than silent acceptance of an unexpected shape.
+The crosswalk between the Go DTOs and the Zod schemas is documented in [`docs/dto-schema-map.md`](./docs/dto-schema-map.md). If the two sides drift, the Zod schemas' `.strict()` mode rejects unknown keys at runtime, so a mismatch surfaces as a failing request rather than silent acceptance of an unexpected shape.
 
 The same DTO types feed the generic `DecodeAndValidate[T]` helper used by every handler: the request is decoded into a typed struct and validated in one step, before the service layer is called. That keeps the handler layer doing only HTTP work, with no parsing or validation logic scattered across it.
 
 Where to look:
 
-- [`nacl_backend/internal/dto/dto.go`](../../nacl_backend/internal/dto/dto.go): request and response structs, the `Validator` interface, and `DecodeAndValidate[T]`.
-- [`nacl_frontend/src/lib/requestValidation.ts`](../../nacl_frontend/src/lib/requestValidation.ts) and [`responseValidation.ts`](../../nacl_frontend/src/lib/responseValidation.ts): the Zod mirror, including `.strict()` and date coercion via `z.string().pipe(z.coerce.date())`.
+- [`nacl_backend/internal/dto/dto.go`](./nacl_backend/internal/dto/dto.go): request and response structs, the `Validator` interface, and `DecodeAndValidate[T]`.
+- [`nacl_frontend/src/lib/requestValidation.ts`](./nacl_frontend/src/lib/requestValidation.ts) and [`responseValidation.ts`](./nacl_frontend/src/lib/responseValidation.ts): the Zod mirror, including `.strict()` and date coercion via `z.string().pipe(z.coerce.date())`.
 
-For a full field-by-field mapping between the Go and TypeScript sides, see [`docs/dto-schema-map.md`](../dto-schema-map.md).
+For a full field-by-field mapping between the Go and TypeScript sides, see [`docs/dto-schema-map.md`](./docs/dto-schema-map.md).
 
 ## Tech stack
 
@@ -171,7 +171,7 @@ Three properties worth pointing out in this diagram:
 
 The layered design enforces separation of concerns by dependency direction. Each layer depends only on the one below it and exposes a narrow interface to the one above: the router dispatches to handlers, handlers speak only HTTP and DTOs, the service owns business logic and crypto orchestration, and the data layer is consumed by the service alone. Errors defined in the service are caught at the handler boundary and mapped to HTTP status codes, so transport concerns never leak into business logic and vice versa.
 
-Architectural decisions are recorded as ADRs in [`docs/decisions.md`](../decisions.md).
+Architectural decisions are recorded as ADRs in [`docs/decisions.md`](./docs/decisions.md).
 
 ## Quickstart
 
@@ -203,7 +203,7 @@ npm install
 npm run dev
 ```
 
-See [`nacl_backend/docs/dev_env_config.md`](../../nacl_backend/docs/dev_env_config.md) for the full prerequisites list.
+See [`nacl_backend/docs/dev_env_config.md`](./nacl_backend/docs/dev_env_config.md) for the full prerequisites list.
 
 ### Option C: Manual build
 
@@ -258,18 +258,18 @@ A working `.env` template is `include`d and exported by the Makefile at the star
 
 ### API reference
 
-For the full list of API endpoints with request and response shapes, see [`docs/dto-schema-map.md`](../dto-schema-map.md).
+For the full list of API endpoints with request and response shapes, see [`docs/dto-schema-map.md`](./docs/dto-schema-map.md).
 
 ## CI / CD
 
-Two workflows under [`.github/workflows/`](../../.github/workflows/):
+Two workflows under [`.github/workflows/`](./.github/workflows/):
 
 - **`backend-ci.yml`** runs on PRs to `main` touching `nacl_backend/**`. It lints with `golangci-lint`, then spins up a PostgreSQL service container, runs migrations and `sqlc generate`, builds, and runs `go test -race ./...`.
 - **`frontend-ci.yml`** runs on push and PR to `main` touching `nacl_frontend/**`. It runs ESLint and `tsc --noEmit`, then Playwright, then a production build.
 
 Both workflows are path-scoped, so a frontend-only change does not trigger the backend pipeline and vice versa.
 
-See [`docs/ci_cd.md`](../ci_cd.md).
+See [`docs/ci_cd.md`](./docs/ci_cd.md).
 
 ## Disclaimers
 
@@ -303,11 +303,11 @@ Things we plan to work on in the future:
 
 ## Further reading
 
-- [`docs/decisions.md`](../decisions.md) - the ADRs explaining why the architecture is the way it is.
-- [`docs/user_stories.md`](../user_stories.md) - MVP scope and the explicit list of post-MVP features.
-- [`nacl_backend/docs/encryption_flow.md`](../../nacl_backend/docs/encryption_flow.md) - the full crypto design with diagrams.
-- [`docs/dto-schema-map.md`](../dto-schema-map.md) - how Go DTOs and Zod schemas stay in sync.
-- [`nacl_backend/docs/dev_env_config.md`](../../nacl_backend/docs/dev_env_config.md) - local prerequisites and tool installs.
+- [`docs/decisions.md`](./docs/decisions.md) - the ADRs explaining why the architecture is the way it is.
+- [`docs/user_stories.md`](./docs/user_stories.md) - MVP scope and the explicit list of post-MVP features.
+- [`nacl_backend/docs/encryption_flow.md`](./docs/nacl_backend/docs/encryption_flow.md) - the full crypto design with diagrams.
+- [`docs/dto-schema-map.md`](./docs/dto-schema-map.md) - how Go DTOs and Zod schemas stay in sync.
+- [`nacl_backend/docs/dev_env_config.md`](./docs/nacl_backend/docs/dev_env_config.md) - local prerequisites and tool installs.
 
 The remaining files under `docs/` and `nacl_backend/docs/` are bonus material on specific topics (serving React from Go, error handling, migrations, frontend setup, CSS patterns).
 
@@ -315,4 +315,4 @@ The remaining files under `docs/` and `nacl_backend/docs/` are bonus material on
 
 Built by **Manolo Estrada** ([@ManoloEsS](https://github.com/ManoloEsS)).
 
-Licensed under the [MIT License](../../LICENSE).
+Licensed under the [MIT License](./LICENSE).
