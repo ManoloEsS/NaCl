@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://nacl-g5mw.onrender.com)
 
-> A single-binary password manager implementing envelope encryption (AES-256-GCM over an Argon2id-derived key) with a Go HTTP backend serving an embedded React SPA.
+### A single-binary password manager implementing envelope encryption (AES-256-GCM over an Argon2id-derived key) with a Go HTTP backend serving an embedded React SPA.
 
 **Live demo:** https://nacl-g5mw.onrender.com
 
@@ -38,13 +38,14 @@ The architecture is recorded as a set of Architecture Decision Records (ADRs) in
 7. [DTO contracts: Go structs and Zod schemas](#dto-contracts-go-structs-and-zod-schemas)
 8. [Tech stack](#tech-stack)
 9. [Architecture](#architecture)
-10. [Quickstart](#quickstart)
-11. [Development](#development)
-12. [CI / CD](#ci--cd)
-13. [Disclaimers](#disclaimers)
-14. [Roadmap](#roadmap)
-15. [Further reading](#further-reading)
-16. [Author & License](#author--license)
+10. [Observability](#observability)
+11. [Quickstart](#quickstart)
+12. [Development](#development)
+13. [CI / CD](#ci--cd)
+14. [Disclaimers](#disclaimers)
+15. [Roadmap](#roadmap)
+16. [Further reading](#further-reading)
+17. [Author & License](#author--license)
 
 ## Features
 
@@ -164,6 +165,84 @@ Three properties worth pointing out in this diagram:
 The layered design enforces separation of concerns by dependency direction. Each layer depends only on the one below it and exposes a narrow interface to the one above: the router dispatches to handlers, handlers speak only HTTP and DTOs, the service owns business logic and crypto orchestration, and the data layer is consumed by the service alone. Errors defined in the service are caught at the handler boundary and mapped to HTTP status codes, so transport concerns never leak into business logic and vice versa.
 
 Architectural decisions are recorded as ADRs in [`docs/decisions.md`](./docs/decisions.md).
+
+## Observability
+
+NaCl uses Go's `log/slog` package for structured logging throughout the
+request lifecycle, with a dual-handler design that separates
+developer-facing diagnostics from operational log output.
+
+### Dual-handler logger
+
+On startup the server initialises a `slog.Logger` backed by two handlers
+running simultaneously via `slog.NewMultiHandler`:
+
+- A text handler writing to stderr at `Debug` level -- human-readable
+  output for local development and troubleshooting.
+- A JSON handler writing to a configurable log file at `Info` level --
+  machine-parseable output suited for ingestion by log aggregators.
+
+Because the two handlers are independent, debug-level diagnostics appear
+on stderr during local work while only `Info`-and-above entries reach
+the log file.
+
+### Request-scoped logging
+
+Every HTTP request passes through the `RequestLogger` middleware, which
+captures and logs the method, path, response status code, client IP, and
+wall-clock duration. A typical request produces:
+
+```json
+{"time":"2026-06-12T18:09:25.863776373-06:00","level":"INFO","msg":"Served request","method":"GET","path":"/","status":200,"client_ip":"100.127.73.104","duration":6110}
+```
+
+The status code is captured via a wrapper around the standard
+`ResponseWriter`, so the log entry always reflects the final status code
+regardless of where in the handler chain the request terminated.
+Durations are reported in nanoseconds.
+
+### Structured error context
+
+Errors carry structured attributes through the `apperr` package. The
+logger's `replaceAttr` function intercepts any attribute whose key is
+`"error"`, unwraps the error chain, and emits the full chain as a group:
+
+```json
+{
+  "time": "2026-06-12T20:56:18.760336969-06:00",
+  "level": "ERROR",
+  "msg": "could not create user",
+  "error": {
+    "message": "duplicate key: users_username_key",
+    "username": "some username",
+    "endpoint": "POST /api/users"
+  }
+}
+```
+
+The `apperr.WithAttrs` helper attaches key-value pairs at the call site,
+and the logger surfaces them automatically without special handling in
+the middleware or handler layers.
+
+### Panic recovery
+
+The `Recovery` middleware catches panics from downstream handlers, logs
+the panic value as a structured error, and writes a `500` response.
+Recovery at this boundary ensures a single panicking request cannot bring
+down the process.
+
+### Audit log
+
+Create, update, and delete operations on credentials are recorded in a
+dedicated `operations` database table, keyed by user. The audit log
+provides an immutable history of vault changes independent of the
+request log stream, accessible through `GET /api/operations`.
+
+### Graceful shutdown
+
+On receiving `SIGINT` or `SIGTERM`, the server drains in-flight requests
+within a 5-second timeout window before exiting. Each shutdown phase is
+logged at `Debug` level so the sequence is traceable in the output.
 
 ## Quickstart
 
