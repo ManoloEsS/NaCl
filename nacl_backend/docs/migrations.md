@@ -171,7 +171,7 @@ Your project uses **timestamped** migrations (goose default).
 
 ## Best Practices
 
-### DO ✅
+### DO 
 
 - Write both Up and Down migrations
 - Test rollback before committing
@@ -180,7 +180,7 @@ Your project uses **timestamped** migrations (goose default).
 - Commit migration files to git
 - Run `sqlc generate` after schema changes
 
-### DON'T ❌
+### DON'T 
 
 - Edit committed migrations
 - Delete migration files
