@@ -177,10 +177,28 @@ Architectural decisions are recorded as ADRs in [`docs/decisions.md`](./docs/dec
 
 ### Option A: Docker (recommended)
 
+Requires Docker. The application needs a PostgreSQL instance. Start one and create the database:
+
 ```bash
+# Create a shared Docker network
+docker network create nacl
+
+# Start PostgreSQL on the shared network (skip if you already have one running)
+docker run -d --network nacl --name nacl_postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  postgres:18
+
+# Wait for PostgreSQL to be ready
+sleep 3
+
+# Create the database
+docker exec nacl_postgres psql -U postgres -c "CREATE DATABASE nacl_dev;"
+
+# Build and run NaCl on the same network (migrations run automatically on startup)
 docker build -t nacl .
-docker run -p 3333:3333 \
-  -e DATABASE_URL="postgresql://postgres:postgres@host.docker.internal:5432/nacl_dev?sslmode=disable" \
+docker run -p 3333:3333 --network nacl \
+  -e DATABASE_URL="postgresql://postgres:postgres@nacl_postgres:5432/nacl_dev?sslmode=disable" \
   -e JWT_SECRET="your-secret" \
   -e SALT_PORT=3333 \
   nacl
@@ -218,6 +236,10 @@ cd ../nacl_backend && go build -o nacl .
 
 ## Development
 
+The local development workflow uses Docker for PostgreSQL. You can also point
+`DATABASE_URL` at any existing Postgres instance and skip the `make db-*`
+commands below.
+
 ### Environment variables
 
 | Variable | Required | Description |
@@ -237,11 +259,11 @@ A working `.env` template is `include`d and exported by the Makefile at the star
 | Target | Effect |
 | --- | --- |
 | `make dev` | Hot-reload via `air`. |
-| `make dev-full` | Start Postgres, init databases, migrate, then `make dev`. |
-| `make db-start` `db-stop` `db-restart` `db-reset` | Postgres container lifecycle. |
+| `make dev-full` | Start a Docker PostgreSQL container, create databases, migrate, then `make dev` (requires Docker). |
+| `make db-start` `db-stop` `db-restart` `db-reset` | Start/stop/restart a Docker PostgreSQL container (requires Docker). |
 | `make db-migrate` `db-down` `db-status` | Goose migrations. |
 | `make db-new name=add_users` | Create a new timestamped migration. |
-| `make db-test-clean` | Stand up an isolated Postgres on port 5433 for tests. |
+| `make db-test-clean` | Start an isolated Docker PostgreSQL container on port 5433 and apply migrations (requires Docker). |
 | `make build` `run` `clean` | Compile, run, or remove the binary. |
 | `make test` | Reset test DB and run `go test ./...` through `tparse`. |
 | `make lint` `fmt` `fmt-check` `ci` | Mirror the CI checks. |
