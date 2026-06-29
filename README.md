@@ -246,36 +246,41 @@ logged at `Debug` level so the sequence is traceable in the output.
 
 ## Quickstart
 
-### Option A: Docker (recommended)
+### Option A: Docker Compose (recommended)
 
-Requires Docker. The application needs a PostgreSQL instance. Start one and create the database:
+Requires Docker. Build and start both services:
 
 ```bash
-# Create a shared Docker network
-docker network create nacl
-
-# Start PostgreSQL on the shared network (skip if you already have one running)
-docker run -d --network nacl --name nacl_postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  postgres:18
-
-# Wait for PostgreSQL to be ready
-sleep 3
-
-# Create the database
-docker exec nacl_postgres psql -U postgres -c "CREATE DATABASE nacl_dev;"
-
-# Build and run NaCl on the same network (migrations run automatically on startup)
-docker build -t nacl .
-docker run -p 3333:3333 --network nacl \
-  -e DATABASE_URL="postgresql://postgres:postgres@nacl_postgres:5432/nacl_dev?sslmode=disable" \
-  -e JWT_SECRET="your-secret" \
-  -e SALT_PORT=3333 \
-  nacl
+docker compose up --build
 ```
 
-The container ships the frontend embedded in the Go binary; no separate web server is required.
+PostgreSQL starts first with a health check, then NaCl connects, runs
+migrations automatically, and serves the SPA on port 3333.
+
+The container ships the frontend embedded in the Go binary; no separate
+web server is required.
+
+```bash
+# Run in the background
+docker compose up --build -d
+
+# Stop and remove the containers
+docker compose down
+```
+
+**Important notes:**
+
+- **No persistent volume.** Postgres data is stored inside the container
+  and will be lost when the container is removed. For evaluation and
+  development this is fine, but add a named volume if you need data to
+  survive `docker compose down`.
+- **Change the JWT secret.** The default value in `docker-compose.yml`
+  is a placeholder. Replace `JWT_SECRET: "change-me-to-a-secret"` with a
+  strong random value before storing real data.
+- **Log output.** The text handler writes to stderr (visible in
+  `docker compose logs`). JSON logs go to a file inside the container by
+  default; set `SALT_LOG_FILE` in `docker-compose.yml` to redirect
+  them.
 
 ### Option B: Full local dev environment
 
