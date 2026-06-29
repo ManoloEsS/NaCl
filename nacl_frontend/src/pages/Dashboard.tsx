@@ -5,7 +5,7 @@ export const Dashboard = () => {
     <Layout>
       <div className='dash-stack'>
         <div className='demo-banner'>
-          Demo. Do not store real credentials here.
+          Store real credentials here at your own risk.
         </div>
 
         <div className='card'>
@@ -62,21 +62,7 @@ export const Dashboard = () => {
             the master key, so rotating your password is O(1).
           </p>
         </div>
-
-        <div className='card'>
-          <p className='card-text'>
-            Source:{' '}
-            <a
-              href='https://github.com/ManoloEsS/NaCl'
-              target='_blank'
-              rel='noopener noreferrer'
-            >
-              github.com/ManoloEsS/NaCl
-            </a>
-          </p>
-        </div>
       </div>
     </Layout>
   )
 }
-

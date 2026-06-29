@@ -8,17 +8,7 @@ export const LoginHero = () => {
         from your login password with Argon2id. When you change your password,
         only the master key is re-encrypted; your stored credentials stay
         untouched.
-        <br />
-        <br />
-        <br />
-        <h2>Explore the demo</h2>
-        <p>
-          <strong>Username: </strong>Test_user
-          <br />
-          <strong>Password: </strong>hashandeggs
-        </p>
       </p>
     </div>
   )
 }
-
