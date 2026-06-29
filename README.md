@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../../LICENSE)
 [![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://nacl-g5mw.onrender.com)
 
-> A single-binary password manager implementing envelope encryption (AES-256-GCM over an Argon2id-derived key) with a Go HTTP backend serving an embedded React 19 SPA.
+> A single-binary password manager implementing envelope encryption (AES-256-GCM over an Argon2id-derived key) with a Go HTTP backend serving an embedded React SPA.
 
 <!-- TODO screenshot: docs/readme_drafts/hero-shot.png -->
 
@@ -15,13 +15,13 @@
 
 NaCl is a password manager. You create an account, you store the credentials you use to log into other services (your email, your social media, anything), and NaCl keeps them encrypted so they're unreadable to anyone who gets hold of the database.
 
-The name comes from the chemical formula for salt, and a *cryptographic salt* is exactly what NaCl uses to protect the key that encrypts your data.
+The name comes from the chemical formula for salt, and a *cryptographic salt* is what NaCl uses to protect the key that encrypts your data.
 
 One design choice is worth flagging up front: if you ever change your login password, none of your stored credentials need to be re-encrypted. The cost of a password rotation is constant, whether you've saved five credentials or five hundred. The rest of this document explains how that works.
 
 ## Overview
 
-NaCl is a monolithic web application: a Go HTTP backend serving a React 19 single-page application, both compiled into one self-contained binary. The frontend is embedded at build time via `//go:embed`, so deployment is a single image with no separate web server.
+NaCl is a monolithic web application: a Go HTTP backend serving a React 19 single-page application, both compiled into one self-contained binary.
 
 The architecture is recorded as a set of Architecture Decision Records (ADRs) in [`docs/decisions.md`](../decisions.md), and the encryption design is fully documented in [`nacl_backend/docs/encryption_flow.md`](../../nacl_backend/docs/encryption_flow.md). The repository follows strict conventional commits and is exercised by two path-scoped GitHub Actions workflows.
 
@@ -157,10 +157,7 @@ flowchart LR
     Router --> MW["Middleware\nlogging → recovery → JWT validation"]
     MW --> Handler["Handler\n1. decode + validate DTO\n2. call service\n3. map errors to HTTP"]
     Handler --> Service["Service\nbusiness logic + crypto orchestration"]
-    Service --> DB[("PostgreSQL")]
-    Service --> Crypto["encryption"]
-    Service --> Auth["auth\nJWT + password hashing"]
-    Service --> Ops["audit log"]
+    Service --> Service layer
     Router --> Static["Embedded static FS\nSPA fallback"]
     Static --> Browser
 ```
