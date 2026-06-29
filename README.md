@@ -11,7 +11,7 @@
 
 **Live demo:** https://nacl-g5mw.onrender.com
 
-<!-- TODO screenshot: docs/readme_drafts/hero-shot.png -->
+![login](media/login.png)
 
 ## What is it?
 
@@ -55,6 +55,18 @@ The architecture is recorded as a set of Architecture Decision Records (ADRs) in
 - **Atomic key rotation**: changing the login password re-encrypts only the master key; credential rows are untouched.
 - **Audit log**: create, update, and delete operations are recorded per user and listed chronologically.
 - **Single-binary deployment**: frontend and backend ship as one Go binary in an `alpine` runtime image.
+
+### Credential Form
+![new](media/newform.png)
+
+### Vault
+
+![vault](media/vault.png)
+
+### Account Page
+
+
+![account](media/account.png)
 
 ## How it works at a glance
 
