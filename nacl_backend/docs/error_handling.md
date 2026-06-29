@@ -17,7 +17,7 @@ This document explains error handling patterns, when to use different error wrap
 
 ## Error Types
 
-### 1. **Validation Errors** ❌
+### 1. **Validation Errors** 
 
 User input errors that are expected and self-explanatory.
 
@@ -45,7 +45,7 @@ if len(password) < 8 {
 
 ---
 
-### 2. **Operational Errors** ⚠️
+### 2. **Operational Errors** 
 
 Expected errors from external systems that should be handled gracefully.
 
@@ -81,7 +81,7 @@ if err != nil {
 
 ---
 
-### 3. **Programming Errors** 💥
+### 3. **Programming Errors** 
 
 Bugs in the code that should never happen.
 
@@ -120,14 +120,14 @@ errors.New("simple error message")
 ```
 
 **Use for:**
-- ✅ Validation errors
-- ✅ Simple, self-explanatory errors
-- ✅ Internal helper functions
+-  Validation errors
+-  Simple, self-explanatory errors
+-  Internal helper functions
 
 **Does NOT provide:**
-- ❌ Stack traces
-- ❌ Error wrapping
-- ❌ Context/attributes
+-  Stack traces
+-  Error wrapping
+-  Context/attributes
 
 ---
 
@@ -140,15 +140,15 @@ fmt.Errorf("context: %w", underlyingError)
 ```
 
 **Use for:**
-- ✅ Simple error wrapping
-- ✅ Preserving error chain
-- ✅ When you don't need stack traces
+-  Simple error wrapping
+-  Preserving error chain
+-  When you don't need stack traces
 
 **Provides:**
-- ✅ Error chain (works with `errors.Unwrap()`)
-- ✅ Custom context message
-- ❌ No stack traces
-- ❌ No structured attributes
+-  Error chain (works with `errors.Unwrap()`)
+-  Custom context message
+-  No stack traces
+-  No structured attributes
 
 ---
 
@@ -163,15 +163,15 @@ pkgerrors.Errorf("formatted: %v", err)
 ```
 
 **Use for:**
-- ✅ Database errors
-- ✅ External service errors
-- ✅ Any operational error needing stack trace
+-  Database errors
+-  External service errors
+-  Any operational error needing stack trace
 
 **Provides:**
-- ✅ Stack traces (captured at wrap point)
-- ✅ Error chain (works with `errors.Unwrap()`)
-- ✅ Custom context message
-- ❌ No structured attributes
+-  Stack traces (captured at wrap point)
+-  Error chain (works with `errors.Unwrap()`)
+-  Custom context message
+-  No structured attributes
 
 ---
 
@@ -185,15 +185,15 @@ apperr.Attrs(err)  // Extract all attributes from error chain
 ```
 
 **Use for:**
-- ✅ HTTP handler errors
-- ✅ Service layer errors
-- ✅ User-facing operations
+-  HTTP handler errors
+-  Service layer errors
+-  User-facing operations
 
 **Provides:**
-- ✅ Structured attributes (key-value pairs)
-- ✅ Error chain preservation
-- ✅ Works with logger to extract all context
-- ❌ No stack traces (combine with pkg/errors)
+-  Structured attributes (key-value pairs)
+-  Error chain preservation
+-  Works with logger to extract all context
+-  No stack traces (combine with pkg/errors)
 
 ---
 
@@ -220,7 +220,7 @@ Did an error occur?
 
 ## Logger Behavior
 
-### Your Logger Handles ALL Cases ✅
+### Your Logger Handles ALL Cases 
 
 Current implementation in `internal/logger/logger.go`:
 
@@ -256,11 +256,11 @@ func replaceAttr(groups []string, a slog.Attr) slog.Attr {
 
 | Error Type | Message | Stack Trace | Attributes |
 |------------|---------|-------------|------------|
-| Plain `errors.New()` | ✅ Yes | ❌ No | ❌ No |
-| `fmt.Errorf()` | ✅ Yes | ❌ No | ❌ No |
-| `pkgerrors.Wrap()` | ✅ Yes | ✅ Yes | ❌ No |
-| `apperr.WithAttrs()` | ✅ Yes | ❌ No | ✅ Yes |
-| Combined (pkgerrors + apperr) | ✅ Yes | ✅ Yes | ✅ Yes |
+| Plain `errors.New()` |  Yes |  No |  No |
+| `fmt.Errorf()` |  Yes |  No |  No |
+| `pkgerrors.Wrap()` |  Yes |  Yes |  No |
+| `apperr.WithAttrs()` |  Yes |  No |  Yes |
+| Combined (pkgerrors + apperr) |  Yes |  Yes |  Yes |
 
 ### Error Chain Walking
 
@@ -290,12 +290,12 @@ logger.Error("failed", "error", err)
 ### Configuration Layer
 
 ```go
-// ❌ Don't use apperr - validation error
+//  Don't use apperr - validation error
 if cfg.JWTSecret == "" {
     return errors.New("JWT_SECRET is required")
 }
 
-// ❌ Don't use apperr - self-explanatory
+//  Don't use apperr - self-explanatory
 file, err := os.Open("config.json")
 if err != nil {
     return fmt.Errorf("failed to open config: %w", err)
@@ -307,7 +307,7 @@ if err != nil {
 ### Database Layer
 
 ```go
-// ✅ Use pkgerrors for stack trace
+//  Use pkgerrors for stack trace
 func (d *Database) NewDatabase(ctx context.Context, connString string) (*Database, error) {
     pool, err := pgxpool.New(ctx, connString)
     if err != nil {
@@ -327,7 +327,7 @@ func (d *Database) NewDatabase(ctx context.Context, connString string) (*Databas
 ### Service Layer
 
 ```go
-// ✅ Combine pkgerrors + apperr
+//  Combine pkgerrors + apperr
 func (s *Service) CreateUser(email, password string) error {
     hash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
     if err != nil {
@@ -359,7 +359,7 @@ func (s *Service) CreateUser(email, password string) error {
 ### HTTP Handler Layer
 
 ```go
-// ✅ Combine pkgerrors + apperr with request context
+//  Combine pkgerrors + apperr with request context
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
     var req LoginRequest
     if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -395,7 +395,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 ### Middleware Layer
 
 ```go
-// ✅ Recovery middleware uses logger automatically
+//  Recovery middleware uses logger automatically
 func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
     return func(next http.Handler) http.Handler {
         return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -421,7 +421,7 @@ func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
 
 ## Best Practices
 
-### ✅ DO
+###  DO
 
 1. **Wrap errors at layer boundaries**
    ```go
@@ -456,7 +456,7 @@ func Recovery(logger *slog.Logger) func(http.Handler) http.Handler {
 
 ---
 
-### ❌ DON'T
+###  DON'T
 
 1. **Don't wrap validation errors**
    ```go

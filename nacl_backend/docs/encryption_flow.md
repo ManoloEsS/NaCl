@@ -347,7 +347,7 @@ Step 3: Decrypt master key with old derived key
   └─ decodedMasterKey = base64.StdEncoding.DecodeString(encryptedMasterKey)
   └─ masterKey = AES-GCM-decrypt(decodedMasterKey, oldDerivedKey)
       → Recovers original 32-byte random master key
-      → ✅ Ciphers remain encrypted with this same master key!
+      → Ciphers remain encrypted with this same master key!
 
 Step 4: Reuse the existing salt (decoded in step 2)
   └─ (no new salt is generated; the existing decodedSalt is reused)
@@ -368,7 +368,7 @@ Step 8: Update user record
        updatedAt = NOW()
      WHERE id = :userId
 
-✅ IMPORTANT: No cipher records are modified!
+IMPORTANT: No cipher records are modified!
    - encryptedPassword stays the same
    - nonce stays the same
    - Master key stays the same
@@ -383,13 +383,13 @@ Step 8: Update user record
 | Re-encrypt ALL ciphers with new key | Re-encrypt masterKey once |
 | Slow for users with many passwords | Fast regardless of cipher count |
 | Risk of data loss if process interrupted | Atomic operation, safe |
-| ❌ Don't use this | ✅ Current implementation |
+|  Don't use this |  Current implementation |
 
 ---
 
 ## Security Considerations
 
-### ✅ Implemented Security Measures
+###  Implemented Security Measures
 
 | Measure | Implementation |
 |---------|----------------|
@@ -402,7 +402,7 @@ Step 8: Update user record
 | **Cascade delete** | Deleting user removes all ciphers |
 | **Password hashing** | Argon2id for login password |
 
-### ⚠️ Security Trade-offs
+###  Security Trade-offs
 
 | Decision | Trade-off | Mitigation |
 |----------|-----------|------------|
@@ -411,7 +411,7 @@ Step 8: Update user record
 | HTTPS required | TLS overhead | Use TLS 1.3, HTTP/2 |
 | Ciphertext length reveals plaintext length | Attacker can infer password length | Acceptable for password manager use case; length doesn't reveal content or significantly reduce keyspace |
 
-### 🔐 Ciphertext Length Decision
+###  Ciphertext Length Decision
 
 **Decision:** Do not pad ciphertext to fixed length (MVP)
 
@@ -427,10 +427,10 @@ Step 8: Update user record
 4. **Significant trade-offs** - Padding wastes storage, adds complexity, false sense of security
 
 **When Length Leakage Matters:**
-- ✅ Encrypting documents (1 page vs 100 pages reveals sensitive info)
-- ✅ Encrypting messages ("yes" vs detailed response)
-- ✅ Encrypting search queries (short vs long reveals intent)
-- ❌ Passwords (not a significant concern for password managers)
+-  Encrypting documents (1 page vs 100 pages reveals sensitive info)
+-  Encrypting messages ("yes" vs detailed response)
+-  Encrypting search queries (short vs long reveals intent)
+-  Passwords (not a significant concern for password managers)
 
 **Future Enhancement (Post-MVP):**
 If length hiding becomes important, implement **bucketed padding**:
@@ -451,7 +451,7 @@ This hides exact length while being more efficient than fixed-length padding.
 
 **Industry Standard:** Most password managers (1Password, Bitwarden, LastPass) do not pad ciphertext length.
 
-### 🔐 Master Key Handling
+###  Master Key Handling
 
 **Security Controls:**
 
@@ -463,12 +463,12 @@ This hides exact length while being more efficient than fixed-length padding.
 | **TLS 1.3 minimum** | All communication encrypted |
 
 **What This Protects Against:**
-- ✅ External attackers
-- ✅ Network sniffing (TLS encryption)
+-  External attackers
+-  Network sniffing (TLS encryption)
 
 **What This Does NOT Protect Against:**
-- ⚠️ Compromised server (has access to all master keys)
-- ⚠️ Compromised host (memory inspection attacks)
+-  Compromised server (has access to all master keys)
+-  Compromised host (memory inspection attacks)
 
 **Mitigation Strategies:**
 - Keep codebase minimal (small attack surface, single responsibility)
@@ -476,7 +476,7 @@ This hides exact length while being more efficient than fixed-length padding.
 - Run as non-root user
 - Use Docker security best practices (read-only filesystem, no capabilities)
 
-### 🔒 Recommended Security Enhancements
+###  Recommended Security Enhancements
 
 1. **Rate Limiting**
    - Limit decryption attempts to 5 per minute per user
@@ -497,15 +497,15 @@ This hides exact length while being more efficient than fixed-length padding.
    - Zero out buffers containing cryptographic material
    - Avoid logging sensitive values
 
-### 🚫 What NOT to Do
+###  What NOT to Do
 
-- ❌ **Never log encrypted passwords, keys, or plaintext passwords**
-- ❌ **Never store plaintext passwords**
-- ❌ **Never transmit master key over PUBLIC network** (only internal trusted network)
-- ❌ **Never reuse nonces** (compromises AES-GCM security)
-- ❌ **Never use ECB mode** (use GCM or CBC with HMAC)
-- ❌ **Never use MD5 or SHA1** for key derivation (use Argon2id)
-- ❌ **Never skip authentication tag verification** (allows tampering)
+-  **Never log encrypted passwords, keys, or plaintext passwords**
+-  **Never store plaintext passwords**
+-  **Never transmit master key over PUBLIC network** (only internal trusted network)
+-  **Never reuse nonces** (compromises AES-GCM security)
+-  **Never use ECB mode** (use GCM or CBC with HMAC)
+-  **Never use MD5 or SHA1** for key derivation (use Argon2id)
+-  **Never skip authentication tag verification** (allows tampering)
 
 ---
 
